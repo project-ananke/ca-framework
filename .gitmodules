@@ -1,0 +1,3 @@
+[submodule "source/engine/stygatore"]
+	path = source/engine/stygatore
+	url = https://github.com/sir-w7/stygatore-go.git
