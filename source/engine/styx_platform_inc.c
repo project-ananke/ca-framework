@@ -46,7 +46,7 @@
 
 #include <sys/mman.h>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "core/common/styx_os.c"
 #include "core/common/styx_renderer.c"

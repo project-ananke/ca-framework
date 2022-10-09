@@ -1,0 +1,73 @@
+@output vector.h
+
+// Is the <- feed operator even necessary, or just syntactic sugar?
+@template Vec4 <- T
+// Do we want to output comments like this into the output file?
+// No, the template file is meant for reading, while the
+// output file is mostly for compiler powerlifting.
+
+/* This is a block comment to test out my
+pro skills block comment tokenizing ability. */
+
+typedef struct @t_name @t_name;
+struct @t_name
+{
+	@T x;
+	@T y;
+	@T z;
+	@T w;
+};
+
+@template Vec3 <- (T, new, norm, lit)
+typedef union @t_name @t_name;
+union @t_name
+{
+	struct {
+		@T x;
+		@T y;
+		@T z;
+	};
+	struct {
+		@T r;
+		@T g;
+		@T b;
+	};
+};
+
+/*
+styx_inline @t_name @new(@T x, @T y, @T z)
+{
+	return (@t_name){.x = x, .y = y, .z = z};
+}
+
+styx_inline @t_name @norm(@t_name vector)
+{
+    @t_name result = {0};
+	
+    f32 len = sqrt((f32)(vector.x ^ 2) + (f32)(vector.y ^ 2) + (f32)(vector.z ^ 2));
+    vector.x = (@T)((f32)vector.x / len);
+    vector.y = (@T)((f32)vector.y / len);
+    vector.z = (@T)((f32)vector.z / len);
+    
+    return result;
+}
+*/
+
+#define @lit(r1, g1, b1) ((@t_name){.x = r1, .y = g1, .z = b1})
+
+@template Vec2 <- T
+typedef struct @t_name @t_name;
+struct @t_name
+{
+	@T x;
+	@T y;
+};
+
+@template Vec4 -> f32: vec4f
+@template Vec4 -> u8: vec4c
+
+@template Vec3 -> f32, new_vec3f, vec3f_norm, vec3f_lit: vec3f
+@template Vec3 -> u8, new_vec3c, vec3c_norm, vec3c_lit: vec3c
+
+@template Vec2 -> f32: vec2f
+@template Vec2 -> u16: vec2_coords

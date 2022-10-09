@@ -5,6 +5,7 @@
 
 // NOTE(sir->w): For what is a C program without stdio.h? Even if you can't see it?
 #include <stdint.h>
+#include <math.h>
 
 typedef int8_t  s8;
 typedef int16_t s16;
@@ -37,23 +38,6 @@ typedef double f64;
 #define styx_inline inline
 #endif
 
-typedef struct vec3f vec3f;
-struct vec3f 
-{
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-typedef struct vec3c vec3c;
-struct vec3c
-{
-    u8 r;
-    u8 g;
-    u8 b;
-};
-
-#define vec3c_lit(r1, g1, b1) ((vec3c){.r = r1, .g = g1, .b = b1})
-#define vec3f_lit(x1, y1, z1) ((vec3f){.x = x1, .y = y1, .z = z1})
+#include "../generated/vector.h"
 
 #endif //BASE_TYPES_H

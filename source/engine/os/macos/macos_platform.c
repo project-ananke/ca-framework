@@ -44,7 +44,7 @@ styxplat_destroy_window(styx_window *window)
 styx_function void
 styxplat_process_messages(styx_window *window)
 {
-    SDL_Event e;
+    SDL_Event e = {0};
     while (SDL_PollEvent(&e) != 0) {
         if(e.type == SDL_QUIT) {
             window->running = FALSE;
