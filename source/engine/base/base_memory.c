@@ -2,7 +2,7 @@
 
 #include "base_memory.h"
 
-inline b32
+styx_inline b32
 is_power_of_two(uintptr_t x) 
 {
     return (x & (x - 1)) == 0;
@@ -51,7 +51,7 @@ init_arena(u64 size)
 styx_function void
 free_arena(memory_arena *arena)
 {
-    styx_free_mem(arena->mem);
+    styx_free_mem(arena->mem, arena->size);
     *arena = (memory_arena){0};
 }
 

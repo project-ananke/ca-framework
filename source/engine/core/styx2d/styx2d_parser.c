@@ -2,13 +2,13 @@
 
 #define skip_bytes(mem, byte_num) (mem += byte_num)
 
-inline u32 
+styx_inline u32 
 styx_get_u32be(u8 *mem)
 {
     return mem[0] << 24 | mem[1] << 16 | mem[2] << 8 | mem[3];
 }
 
-inline u16 
+styx_inline u16 
 styx_get_u16be(u8 *mem)
 {
     return mem[0] << 8 | mem[1];

@@ -31,6 +31,12 @@ typedef double f64;
 #define styx_global static
 #define styx_persist static
 
+#if defined(STYX_COMPILER_CLANG) || defined(STYX_COMPILER_GCC)
+#define styx_inline static inline
+#else
+#define styx_inline inline
+#endif
+
 typedef struct vec3f vec3f;
 struct vec3f 
 {

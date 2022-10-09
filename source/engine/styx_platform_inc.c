@@ -42,6 +42,18 @@
 
 // NOTE(sir->w): Support for multiple rendering backends.
 
+#elif STYX_OS_MAC 
+
+#include <sys/mman.h>
+
+#include <SDL.h>
+
+#include "core/common/styx_os.c"
+#include "core/common/styx_renderer.c"
+#include "core/common/styx_module.h"
+
+#include "os/macos/macos_platform.c"
+
 #else
 # error "Platform not yet supported."
 #endif

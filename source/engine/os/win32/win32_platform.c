@@ -20,7 +20,7 @@ win32_alloc_mem(u64 size)
 }
 
 styx_function void
-win32_free_mem(void *mem)
+win32_free_mem(void *mem, u64 size)
 {
     VirtualFree(mem, 0, MEM_RELEASE);
 }
@@ -165,11 +165,12 @@ styxplat_update_window_size(styx_window *window)
     window->height = rect.bottom;
 }
 
-inline void 
+styx_inline void 
 styxplat_update_window(styx_window *window, b32 vsync)
 {
     win32_update_window(window->renderer, window->d3d_renderer, window->width, window->height, vsync);
 }
+
 styx_function styx_module *
 styxplat_load_module(str8 mod_path, str8 load, str8 unload, str8 loop,
                      styx_window *window)
@@ -263,7 +264,7 @@ styxplat_unload_module(styx_module *module, styx_window *window)
     *module = (styx_module){0};
 }
 
-inline void 
+styx_inline void 
 styxplat_module_update(styx_module *module, styx_window *window)
 {
     module->styx_update(styx_os, window->renderer);

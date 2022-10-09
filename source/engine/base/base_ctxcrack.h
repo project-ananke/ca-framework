@@ -17,7 +17,7 @@
 # elif defined(_M_I86)
 #  define STYX_ARCH_X86 1
 # elif defined(_M_AMD64)
-#  define STYX_ARCH_ARM
+#  define STYX_ARCH_ARM 1
 # else
 #  error Unknown arch.
 # endif
@@ -39,7 +39,7 @@
 #  define STYX_ARCH_X64 1
 # elif defined(__i386__)
 #  define STYX_ARCH_X86 1
-# elif defined(__arm__)
+# elif defined(__arm64__)
 #  define STYX_ARCH_ARM 1
 # else
 #  error Unknown arch.

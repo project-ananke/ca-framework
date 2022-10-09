@@ -3,8 +3,8 @@
 #ifndef STYX2D_PARSER_H
 #define STYX2D_PARSER_H
 
-inline u32 styx_get_u32be(u8 *mem);
-inline u16 styx_get_u16be(u8 *mem);
+styx_inline u32 styx_get_u32be(u8 *mem);
+styx_inline u16 styx_get_u16be(u8 *mem);
 
 //-
 // TODO(sir->w): PNG file loading. Currently on hiatus to make time for work on bmp file loading.

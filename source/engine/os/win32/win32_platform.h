@@ -6,7 +6,7 @@
 typedef struct styx_window styx_window;
 struct styx_window
 {
-    HWND handle;
+	HWND handle;
     StyxRenderer *d3d_renderer;
     StyxRenderQueue *renderer;
     
@@ -38,6 +38,8 @@ styx_function int styx_main(void);
 // TODO(sir->w): Change calls to styxplat_ calls.
 styx_function void win32_msg_box(char *title, char *msg);
 styx_function void *win32_alloc_mem(u64 size);
+styx_function void win32_free_mem(void *mem, u64 size);
+
 styx_function void win32_debug_print(char *str);
 styx_function void *win32_read_file(memory_arena *arena, str8 path);
 
@@ -53,13 +55,13 @@ styx_function styx_window *styxplat_create_window(str8 title, u32 width, u32 hei
 styx_function void styxplat_destroy_window(styx_window *window);
 styx_function void styxplat_process_messages(styx_window *window);
 styx_function void styxplat_update_window_size(styx_window *window);
-inline void styxplat_update_window(styx_window *window, b32 vsync);
+styx_inline void styxplat_update_window(styx_window *window, b32 vsync);
 
 // NOTE(sir->w): Really misnomers because they actually initialize and free the modules.
 // More like constructors and destructors. 
 styx_function styx_module *styxplat_load_module(str8 mod_path, str8 load, str8 unload, str8 loop, styx_window *window);
 styx_function void styxplat_unload_module(styx_module *module, styx_window *window);
-inline void styxplat_module_update(styx_module *module, styx_window *window);
+styx_inline void styxplat_module_update(styx_module *module, styx_window *window);
 
 // TODO(sir->w): Implement copying the DLL into a temporary DLL for hot reloading to work.
 styx_function void styxplat_reload_module(styx_module *module, styx_window *window);

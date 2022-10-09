@@ -32,7 +32,7 @@ struct temp_arena
 
 
 // TODO(sir->w): Implement a pool allocator for reasons I have yet to know of.
-inline b32 is_power_of_two(uintptr_t x);
+styx_inline b32 is_power_of_two(uintptr_t x);
 styx_function uintptr_t align_forth(uintptr_t ptr, u32 align);
 
 // NOTE(sir->w): Performs a byte-by-byte copy of data.
@@ -49,18 +49,18 @@ styx_function void *arena_push_align(memory_arena *arena, u64 size, u32 align);
 
 styx_function void *arena_resize_align(memory_arena *arena, void *old_memory, u64 old_size, u64 new_size, u32 align);
 #define arena_resize(arena, old_mem, old_size, new_size) \
-arena_resize_align(arena, old_mem, old_size, new_size, DEF_ALIGN)
+	arena_resize_align(arena, old_mem, old_size, new_size, DEF_ALIGN)
 
 //- NOTE(sir->w): Temp arena utilities.
 styx_function temp_arena begin_temp_arena(memory_arena *arena);
 styx_function void end_temp_arena(temp_arena *temp_arena);
 
 #define temp_arena_push_align(temp, size, align) \
-arena_push_align(temp->parent_arena, size, align)
+	arena_push_align(temp->parent_arena, size, align)
 #define temp_arena_push(temp, size) arena_push(temp->parent_arena, size)
 #define temp_arena_resize_align(temp, old_mem, old_size, new_size, align) \
-arena_resize_align(temp->parent_arena, old_mem, old_size, new_size, align)
+	arena_resize_align(temp->parent_arena, old_mem, old_size, new_size, align)
 #define temp_arena_resize(temp, old_mem, old_size, new_size) \
-arena_resize(temp->parent_arena, old_mem, old_size, new_size)
+	arena_resize(temp->parent_arena, old_mem, old_size, new_size)
 
 #endif //MEMORY_H

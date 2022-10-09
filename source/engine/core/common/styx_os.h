@@ -5,7 +5,7 @@
 
 #define RESERVE_MEM(name) void *name(u64 size)
 typedef RESERVE_MEM(StyxReserveMem);
-#define FREE_MEM(name) void name(void *mem)
+#define FREE_MEM(name) void name(void *mem, u64 size)
 typedef FREE_MEM(StyxFreeMem);
 #define MSG_BOX(name) void name(char *title, char *msg)
 typedef MSG_BOX(StyxMessageBox);
@@ -17,6 +17,8 @@ typedef DEBUG_PRINT(StyxDebugPrint);
 #define READ_ENTIRE_FILE(name) void *name(memory_arena *arena, str8 path)
 typedef READ_ENTIRE_FILE(StyxReadEntireFile);
 
+// Bruh, this violates the naming conventions of the project. Fix it. 
+//
 // This is a really nice v-table interface and all, and it really helps when 
 // the developer is working on the game layer, but it complicates development
 // on the platform later because of unnecessary abstractions.
@@ -31,7 +33,7 @@ struct StyxOS
     StyxReadEntireFile *read_entire_file;
 };
 
-// How to give the base modules access to the StyxOS calls/
+// How to give the base modules access to the StyxOS calls.
 styx_global StyxOS *styx_os;
 
 #define styxos_message_box styx_os->msg_box

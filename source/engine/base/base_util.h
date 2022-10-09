@@ -16,7 +16,7 @@
 // NOTE(sir->w): This is the most beautiful macro I've ever written,
 // and I refuse to believe otherwise.
 #define println(fmt, ...) printf(fmt "\n", __VA_ARGS__)
-#define fprintln(stream, fmt, ...) printf(stream, fmt "\n", __VA_ARGS__)
+#define fprintln(stream, fmt, ...) fprintf(stream, fmt "\n", __VA_ARGS__)
 
 #define kilobytes(x) (u64)((u64)x * 1024)
 #define megabytes(x) (u64)(kilobytes(x) * 1024)
@@ -28,6 +28,6 @@
 // Basic functions forward declarations needed for the rest of the base.
 styx_function void styx_message_box(char *title, char *message);
 styx_function void *styx_reserve_mem(u64 size);
-styx_function void styx_free_mem(void *mem);
+styx_function void styx_free_mem(void *mem, u64 size);
 
 #endif //UTIL_H

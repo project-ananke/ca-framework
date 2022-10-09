@@ -28,7 +28,7 @@ extern void styx_update(StyxOS *plat_os, StyxRenderQueue *renderer);
 #define MODULE_UNLOAD(name) styx_export void name(StyxOS *plat_os, StyxRenderQueue *renderer)
 #define MODULE_LOOP(name) styx_export void name(StyxOS *plat_os, StyxRenderQueue *renderer)
 
-inline void 
+styx_inline void 
 _styx_module_init(StyxOS *os, u64 alloc_size, u64 tmp_alloc_size)
 {
     styx_os = os;
