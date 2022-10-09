@@ -1,10 +1,10 @@
 #!/bin/bash
 
 pushd source/engine/stygatore > /dev/null
-make
+go build
 popd > /dev/null
 
-cp source/engine/stygatore/build/stygatore build/
+mv source/engine/stygatore/stygatore build/
 
 ./build/stygatore source/engine/generated
 
