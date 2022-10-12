@@ -8,11 +8,11 @@ set platform_link_flags= /subsystem:windows shlwapi.lib user32.lib gdi32.lib dxg
 REM What if we only use DLLs to minimize the exe size?
 if not exist build mkdir build
 
-pushd source/engine/stygatore
+pushd source\engine\stygatore
 go build
 popd
 
-move source/engine/stygatore/stygatore build/
+move source\engine\stygatore\stygatore build\
 
 pushd build
 
