@@ -1,9 +1,10 @@
 #!/bin/bash
 
 pushd source/engine/stygatore > /dev/null
-go build
+go build stygatore
 popd > /dev/null
 
+mkdir -p build
 mv source/engine/stygatore/stygatore build/
 
 ./build/stygatore source/engine/generated
