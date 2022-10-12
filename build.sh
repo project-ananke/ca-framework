@@ -9,4 +9,4 @@ mv source/engine/stygatore/stygatore build/
 ./build/stygatore source/engine/generated
 
 echo "build/styx_platform <- source/platform.c"
-clang -Isource/engine -Isource/engine/ext -D_THREAD_SAFE -Wno-incompatible-pointer-types-discards-qualifiers ./source/platform.c -L/opt/homebrew/lib -lsdl2 -o build/styx_platform
+clang -Isource/engine -Isource/engine/ext `sdl2-config --cflags --libs` -Wno-incompatible-pointer-types-discards-qualifiers ./source/platform.c -o build/styx_platform
