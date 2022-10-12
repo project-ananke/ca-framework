@@ -7,12 +7,12 @@ on:
 
 jobs:
   build_macos:
-  steps:
-    - uses: actions/checkout@v3
-    - name: install dependencies
-      run: |
-        brew install SDL2
-        brew install clang
-    - name: build
-      run: |
-        ./build.sh
+    runs-on: actions/checkout@v3
+    steps:
+      - name: install dependencies
+        run: |
+          brew install SDL2
+          brew install clang
+      - name: build
+        run:
+          ./build.sh
