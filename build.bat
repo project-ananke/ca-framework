@@ -12,7 +12,7 @@ pushd source\engine\stygatore
 go build
 popd
 
-move source\engine\stygatore\stygatore build\
+move source\engine\stygatore\stygatore.exe build\
 
 pushd build
 
