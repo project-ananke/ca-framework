@@ -1,4 +1,4 @@
-// Courtesy of Stygatore.
+// Courtesy of Stygatore
 
 // Vec4 -> f32: vec4f
 typedef struct vec4f vec4f;
