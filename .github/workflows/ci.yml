@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-go@v3
       - name: build
         run:
-          build.bat
+          ./build.bat
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with: 
