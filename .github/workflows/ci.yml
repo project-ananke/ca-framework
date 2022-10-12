@@ -29,6 +29,9 @@ jobs:
         with:
           submodules: recursive
       - uses: actions/setup-go@v3
+      - name: setting up VS environment
+        run: 
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
       - name: build
         run:
           ./build.bat
