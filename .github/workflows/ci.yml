@@ -30,11 +30,13 @@ jobs:
           submodules: recursive
       - uses: actions/setup-go@v3
       - name: setting up VS environment
+        shell: cmd
         run: 
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
       - name: build
+        shell: cmd
         run:
-          ./build.bat
+          build.bat
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with: 
