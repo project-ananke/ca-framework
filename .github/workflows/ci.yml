@@ -7,8 +7,9 @@ on:
 
 jobs:
   build_macos:
-    runs-on: actions/checkout@v3
+    runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v3
       - name: install dependencies
         run: |
           brew install SDL2
