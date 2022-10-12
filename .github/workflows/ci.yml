@@ -1,9 +1,11 @@
 name: CI
 on:
   push:
-    branches: [ $default-branch ]
+    branches:
+      - main
   pull_request:
-    branches: [ $default-branch ]
+    branches: 
+      - main
 
   workflow_dispatch:
   
@@ -15,7 +17,6 @@ jobs:
       - name: install dependencies
         run: |
           brew install SDL2
-          brew install clang
       - name: build
         run:
           ./build.sh
