@@ -22,3 +22,18 @@ jobs:
         with: 
           name: macos-artifact
           path: ca-framework.zip
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v3
+      - name: build
+        run:
+          build.bat
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with: 
+          name: macos-artifact
+          path: build
