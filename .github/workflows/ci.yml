@@ -1,13 +1,5 @@
 name: CI
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches: 
-      - main
-
-  workflow_dispatch:
+on: [push, pull_request, workflow_dispatch]
   
 jobs:
   build_macos:
@@ -22,3 +14,8 @@ jobs:
       - name: build
         run:
           ./build.sh
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with: 
+          name: macos-artifact
+          path: ${{github.workspace}}/package

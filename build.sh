@@ -1,7 +1,7 @@
 #!/bin/bash
 
 pushd source/engine/stygatore > /dev/null
-go build stygatore
+go build 
 popd > /dev/null
 
 mkdir -p build
