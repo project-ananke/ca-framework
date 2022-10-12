@@ -18,4 +18,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with: 
           name: macos-artifact
-          path: ${{github.workspace}}/package
+          path: ${{github.workspace}}/build
