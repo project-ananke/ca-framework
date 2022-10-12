@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-go@v3
       - name: build
         shell: cmd
-        run:
+        run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           build.bat
       - name: upload artifacts
