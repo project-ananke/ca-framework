@@ -14,8 +14,11 @@ jobs:
       - name: build
         run:
           ./build.sh
+      - name: compress and archive
+        run:
+          zip -r ca-framework build
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with: 
           name: macos-artifact
-          path: ${{github.workspace}}/build
+          path: ca-framework.zip
