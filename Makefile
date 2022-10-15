@@ -31,7 +31,8 @@ $(BIN_DIR)/$(STYGATORE_EXE): $(STYGATORE_DEPS)
 	@mv source/engine/stygatore/stygatore $@
 
 %.h: %.styx
-	@bin/stygatore $<
+	@echo "  STYX	$<"
+	@bin/stygatore $< > /dev/null
 
 $(BUILD_DIR)/%.c.o: %.c
 	@mkdir -p $(dir $@)
