@@ -25,6 +25,7 @@ $(BIN_DIR)/$(TARGET_EXE): $(BIN_DIR)/stygatore $(STYGATORE_HEADERS) $(OBJS)
 	@$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 $(BIN_DIR)/$(STYGATORE_EXE): $(STYGATORE_DEPS)
+	@mkdir -p $(dir $@)
 	@echo "  GO	$@"
 	@pushd source/engine/stygatore > /dev/null && go build && popd > /dev/null
 	@mv source/engine/stygatore/stygatore $@
