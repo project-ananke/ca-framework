@@ -13,7 +13,7 @@ jobs:
           brew install SDL2
       - name: build
         run:
-          ./build.sh
+          make
       - name: compress and archive
         run:
           zip -r ca-framework build

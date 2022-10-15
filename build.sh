@@ -2,4 +2,6 @@
 
 mkdir -p build
 
-clang -g `sdl2-config --cflags --static-libs` source/*.c -o build/ananke
+files=$(find . -name "*.c")
+
+echo clang -g `sdl2-config --cflags --static-libs` -Iext/lua544  -o build/ananke
