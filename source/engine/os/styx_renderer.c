@@ -12,8 +12,8 @@ void styx_render_grid(styx_window *window, int *grid, u32 width, u32 height)
 	
 	SDL_SetRenderDrawColor(window->renderer, 0x00, 0x00, 0x00, 0xFF);
 	for (int y = 0; y < height; ++y) {
-		for (int x = 1; x < width; ++x) {
-			b32 fill = (*((grid + y * width) + x) == 1);
+		for (int x = 0; x < width; ++x) {
+			b32 fill = (*((grid + y * width) + x + 1) == 1);
 
 			SDL_Rect fill_rect = { x * grid_width, y * grid_height, grid_width, grid_height };
 			if (fill) {

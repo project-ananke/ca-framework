@@ -43,6 +43,6 @@ clean:
 	@rm -rf $(BUILD_DIR)/* $(BIN_DIR)/* $(STYGATORE_GEN_DIR)/*.h
 
 run:
-	./bin/ananke
+	@./bin/ananke
 	
 -include $(DEPS)
