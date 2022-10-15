@@ -7,6 +7,8 @@ struct styx_settings
     int width, height;
 };
 
+extern lua_State *L;
+
 void styx_init_lua();
 void styx_quit_lua();
 

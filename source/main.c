@@ -51,12 +51,26 @@ void rule30()
 int main(int argc, char *argv[])
 {
 	init_styx_engine();
-	
+		
 	styx_settings settings = styx_load_settings("source/settings.lua");
 	styx_window window = styx_create_window("Project Ananke", settings.width, settings.height);
 
-	rule30();
-	
+	if (luaL_dofile(L, "scripts/rule30.lua") != LUA_OK) {
+		fprintln(stderr, "%s", lua_tostring(L, -1));
+		lua_pop(L, 1);
+	}
+
+	lua_getglobal(L, "grid");
+	for (int y = 0; y < GRID_HEIGHT; ++y) {
+		lua_rawgeti(L, -1, y + 1);
+		for (int x = 0; x < GRID_WIDTH; ++x) {
+			lua_rawgeti(L, -1, x + 1);
+			grid[y][x] = lua_tointeger(L, -1);
+			lua_pop(L, 1);
+		}
+		lua_pop(L, 1);
+	}
+
 	while (window.running) {
 		styx_process_messages(&window);
 		styx_window_clear(&window, vec3c_lit(0xFF, 0xFF, 0xFF));

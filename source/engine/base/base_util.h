@@ -14,7 +14,7 @@
 // NOTE(sir->w): This is the most beautiful macro I've ever written,
 // and I refuse to believe otherwise.
 #define println(fmt, ...) printf(fmt "\n", __VA_ARGS__)
-#define fprintln(stream, fmt, ...) printf(stream, fmt "\n", __VA_ARGS__)
+#define fprintln(stream, fmt, ...) fprintf(stream, fmt "\n", __VA_ARGS__)
 
 #define kilobytes(x) (u64)((u64)x * 1024)
 #define megabytes(x) (u64)(kilobytes(x) * 1024)

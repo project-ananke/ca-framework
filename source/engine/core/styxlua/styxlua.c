@@ -8,7 +8,7 @@
 
 #include "styxlua.h"
 
-static lua_State *L;
+lua_State *L;
 
 void styx_init_lua()
 {
