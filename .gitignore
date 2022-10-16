@@ -1,0 +1,5 @@
+*.d
+*.o
+build/
+bin/
+project.4coder

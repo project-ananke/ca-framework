@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 		lua_setglobal(L, "grid");
 	}
 	
-	if (luaL_dofile(L, "scripts/rule30.lua") != LUA_OK) {
+	if (luaL_dofile(L, "scripts/rule90.lua") != LUA_OK) {
 		fprintln(stderr, "%s", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return -1;
