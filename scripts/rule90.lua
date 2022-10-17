@@ -11,7 +11,7 @@ end
 grid[1][1 + grid_width / 2] = 1
 for y = 2, grid_height do
     if grid[y - 1][2] == 1 then break end
-    for x = 2, grid_width - 1 do
+    for x = 2, grid_width do
         if prev_row3(x, y, 1, 1, 1) then
             write_grid(x, y, 0)
         elseif prev_row3(x, y, 1, 1, 0) then

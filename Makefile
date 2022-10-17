@@ -5,15 +5,15 @@ STYGATORE_EXE := stygatore
 
 BIN_DIR := bin
 BUILD_DIR := build
-SRC_DIR := source
-STYGATORE_GEN_DIR := source/engine/generated
+SRC_DIR := engine
+STYGATORE_GEN_DIR := engine/generated
 
 SRCS := $(shell find . -name "*.c")
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-STYGATORE_SRCS := $(wildcard source/engine/generated/*.styx)
+STYGATORE_SRCS := $(wildcard engine/generated/*.styx)
 STYGATORE_HEADERS := $(STYGATORE_SRCS:.styx=.h)
 
 CFLAGS := -g -Iext/lua544 `sdl2-config --cflags` -MMD -MP -Wno-incompatible-pointer-types-discards-qualifiers
@@ -27,8 +27,8 @@ $(BIN_DIR)/$(TARGET_EXE): $(BIN_DIR)/stygatore $(STYGATORE_HEADERS) $(OBJS)
 $(BIN_DIR)/$(STYGATORE_EXE): $(STYGATORE_DEPS)
 	@mkdir -p $(dir $@)
 	@echo "  GO	$@"
-	@pushd source/engine/stygatore > /dev/null && go build && popd > /dev/null
-	@mv source/engine/stygatore/stygatore $@
+	@pushd engine/stygatore > /dev/null && go build && popd > /dev/null
+	@mv engine/stygatore/stygatore $@
 
 %.h: %.styx
 	@echo "  STYX	$<"

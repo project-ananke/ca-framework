@@ -1,4 +1,14 @@
-#include "engine/styx_engine.h"
+#include <SDL.h>
+
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
+#include "base/styx_base.h"
+#include "os/styx_window.h"
+#include "os/styx_renderer.h"
+
+#include "core/styxlua/styxlua.h"
 
 #define GRID_WIDTH 64
 #define GRID_HEIGHT 36
@@ -7,8 +17,12 @@ int grid[GRID_HEIGHT][GRID_WIDTH] = {0};
 
 int main(int argc, char *argv[])
 {
-	init_styx_engine();
-		
+    L = luaL_newstate();
+    luaL_openlibs(L);
+
+	SDL_Init(SDL_INIT_VIDEO);
+    atexit(SDL_Quit);
+    
 	styx_settings settings = styx_load_settings("source/settings.lua");
 	styx_window window = styx_create_window("Project Ananke", settings.width, settings.height);
 
@@ -56,8 +70,8 @@ int main(int argc, char *argv[])
 		
 		styx_window_update(&window);
 	}
-	
-	quit_styx_engine();
+
+	lua_close(L);
 	
 	return 0;
 }

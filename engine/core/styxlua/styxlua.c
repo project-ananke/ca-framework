@@ -10,17 +10,6 @@
 
 lua_State *L;
 
-void styx_init_lua()
-{
-	L = luaL_newstate();
-	luaL_openlibs(L);
-}
-
-void styx_quit_lua()
-{
-	lua_close(L);
-}
-
 int styx_get_globalint(char *var) 
 {
 	int isnum, result;
