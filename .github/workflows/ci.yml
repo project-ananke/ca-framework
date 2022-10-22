@@ -16,7 +16,7 @@ jobs:
           make
       - name: compress and archive
         run:
-          zip -r ca-framework bin
+          zip -r ca-framework bin source
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with: 
@@ -38,4 +38,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with: 
           name: windows-artifact
-          path: bin
+          path: |
+            bin
+            source
