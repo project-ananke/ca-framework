@@ -5,6 +5,7 @@
 #include <lauxlib.h>
 
 #include "../../base/styx_base.h"
+#include "../../sys/styxsys.h"
 
 #include "styxlua.h"
 
@@ -24,17 +25,14 @@ int styx_get_globalint(char *var)
 	return result;
 }
 
-struct styx_settings
-styx_load_settings(char *filename)
+static const luaL_Reg libs[] = {
+  { "styxsys", luaopen_styxsys },
+  { NULL, NULL }
+};
+
+void styxlua_load_libs(lua_State *L) 
 {
-	struct styx_settings settings = {0};
-	
-	if (luaL_dofile(L, filename) != LUA_OK) {
-		// Implement logging system. 
-	}
-
-	settings.width = styx_get_globalint("width");
-	settings.height = styx_get_globalint("height");
-
-	return settings;
+  for (int i = 0; libs[i].name; i++) {
+    luaL_requiref(L, libs[i].name, libs[i].func, 1);
+  }
 }

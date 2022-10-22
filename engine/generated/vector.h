@@ -64,11 +64,11 @@ struct vec2f
 	f32 y;
 };
 
-// Vec2 -> u16: vec2Coords
-typedef struct vec2Coords vec2Coords;
-struct vec2Coords
+// Vec2 -> u32: vec2_coords
+typedef struct vec2_coords vec2_coords;
+struct vec2_coords
 {
-	u16 x;
-	u16 y;
+	u32 x;
+	u32 y;
 };
 

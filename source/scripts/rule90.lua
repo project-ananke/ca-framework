@@ -1,3 +1,9 @@
+styxsys.chdir("bin")
+dir_entries = styxsys.list_dir(".")
+for i = 1, #dir_entries do
+    print(dir_entries[i])
+end
+
 local function prev_row3(x, y, a, b, c)  
     return grid[y - 1][x - 1] == a and 
            grid[y - 1][x]     == b and 

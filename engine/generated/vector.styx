@@ -51,4 +51,4 @@ struct @t_name
 @template Vec3 -> u8, vec3c_lit: vec3c
 
 @template Vec2 -> f32: vec2f
-@template Vec2 -> u16: vec2Coords
+@template Vec2 -> u32: vec2_coords

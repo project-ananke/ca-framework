@@ -5,6 +5,17 @@
 #include "styx_window.h"
 #include "styx_renderer.h"
 
+void styxsys_render_rect(vec2_coords xy, vec2_coords wh, vec3c color, b32 fill)
+{
+	SDL_Rect fill_rect = { xy.x, xy.y, wh.x, wh.y };
+	
+	SDL_SetRenderDrawColor(_global_window.renderer, color.r, color.g, color.b, 0xFF);
+	
+	if (fill) SDL_RenderFillRect(_global_window.renderer, &fill_rect);
+	else SDL_RenderDrawRect(_global_window.renderer, &fill_rect);
+}
+
+#if 0
 void styx_render_grid(styx_window *window, int *grid, u32 width, u32 height)
 {
 	u32 grid_width = window->width / width;
@@ -24,3 +35,4 @@ void styx_render_grid(styx_window *window, int *grid, u32 width, u32 height)
 		}
 	}
 }
+#endif
