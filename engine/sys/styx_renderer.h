@@ -1,6 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-void styxsys_render_rect(vec2_coords xy, vec2_coords wh, vec3c color, b32 fill);
+int styxren_render_rect(lua_State *L);
+int luaopen_styxren(lua_State *L);
 
 #endif

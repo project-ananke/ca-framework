@@ -1,39 +1,33 @@
-styxsys.chdir("bin")
-dir_entries = styxsys.list_dir(".")
-for i = 1, #dir_entries do
-    print(dir_entries[i])
-end
+local core = require('core')
 
-local function prev_row3(x, y, a, b, c)  
-    return grid[y - 1][x - 1] == a and 
-           grid[y - 1][x]     == b and 
-           grid[y - 1][x + 1] == c
-end
+local rule30 = {}
 
-local function write_grid(x, y, a)
-    grid[y][x] = a
-end
+rule30.grid_width = 64
+rule30.grid_height = 36
+rule30.grid = core.zero_grid(rule30.grid_width, rule30.grid_height)
 
-grid[1][1 + grid_width / 2] = 1
-for y = 2, grid_height do
-    if grid[y - 1][2] == 1 then break end
-    for x = 2, grid_width do
-        if prev_row3(x, y, 1, 1, 1) then
-            write_grid(x, y, 0)
-        elseif prev_row3(x, y, 1, 1, 0) then
-            write_grid(x, y, 1)
-        elseif prev_row3(x, y, 1, 0, 1) then
-            write_grid(x, y, 0)
-        elseif prev_row3(x, y, 1, 0, 0) then
-            write_grid(x, y, 1)
-        elseif prev_row3(x, y, 0, 1, 1) then
-            write_grid(x, y, 1)
-        elseif prev_row3(x, y, 0, 1, 0) then
-            write_grid(x, y, 0)
-        elseif prev_row3(x, y, 0, 0, 1) then
-            write_grid(x, y, 1)
-        elseif prev_row3(x, y, 0, 0, 0) then
-            write_grid(x, y, 0)
+rule30.grid[1][1 + rule30.grid_width / 2] = 1
+for y = 2, rule30.grid_height do
+    if rule30.grid[y - 1][2] == 1 then break end
+    for x = 2, rule30.grid_width do
+        if core.prev_row3(rule30.grid, x, y, 1, 1, 1) then
+			rule30.grid[y][x] = 0
+        elseif core.prev_row3(rule30.grid, x, y, 1, 1, 0) then
+			rule30.grid[y][x] = 1
+        elseif core.prev_row3(rule30.grid, x, y, 1, 0, 1) then
+			rule30.grid[y][x] = 0
+        elseif core.prev_row3(rule30.grid, x, y, 1, 0, 0) then
+			rule30.grid[y][x] = 1
+        elseif core.prev_row3(rule30.grid, x, y, 0, 1, 1) then
+			rule30.grid[y][x] = 1
+        elseif core.prev_row3(rule30.grid, x, y, 0, 1, 0) then
+			rule30.grid[y][x] = 0
+        elseif core.prev_row3(rule30.grid, x, y, 0, 0, 1) then
+			rule30.grid[y][x] = 1
+        elseif core.prev_row3(rule30.grid, x, y, 0, 0, 0) then
+			rule30.grid[y][x] = 0
         end
     end
 end
+
+return rule30

@@ -56,7 +56,7 @@ union vec3c
 
 #define vec3c_lit(x1, y1, z1) ((vec3c){.x = x1, .y = y1, .z = z1})
 
-// Vec2 -> f32: vec2f
+// Vec2 -> f32, vec2f_lit: vec2f
 typedef struct vec2f vec2f;
 struct vec2f
 {
@@ -64,11 +64,15 @@ struct vec2f
 	f32 y;
 };
 
-// Vec2 -> u32: vec2_coords
+#define vec2f_lit(x1, y1) ((vec2f){.x = x1, .y = y1})
+
+// Vec2 -> u32, vec2c_lit: vec2_coords
 typedef struct vec2_coords vec2_coords;
 struct vec2_coords
 {
 	u32 x;
 	u32 y;
 };
+
+#define vec2c_lit(x1, y1) ((vec2_coords){.x = x1, .y = y1})
 

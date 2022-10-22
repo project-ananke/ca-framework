@@ -6,6 +6,7 @@
 
 #include "../../base/styx_base.h"
 #include "../../sys/styxsys.h"
+#include "../../sys/styx_renderer.h"
 
 #include "styxlua.h"
 
@@ -27,6 +28,7 @@ int styx_get_globalint(char *var)
 
 static const luaL_Reg libs[] = {
   { "styxsys", luaopen_styxsys },
+  { "styxren", luaopen_styxren },
   { NULL, NULL }
 };
 
