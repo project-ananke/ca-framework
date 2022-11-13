@@ -1,6 +1,6 @@
 [submodule "engine/stygatore"]
 	path = engine/stygatore
 	url = https://github.com/sir-w7/stygatore-go.git
-[submodule "odin-lua"]
-	path = odin-lua
+[submodule "ext/odin-lua"]
+	path = ext/odin-lua
 	url = https://github.com/sir-w7/odin-lua.git
