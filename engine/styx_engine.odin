@@ -2,42 +2,44 @@ package main
 
 import "core:fmt"
 import "core:log"
+import "core:mem"
+import "core:runtime"
+import "core:strings"
 
 import "ext:odin-lua/lua"
 import "ext:odin-lua/luaL"
 
 import SDL "vendor:sdl2"
-import "sys"
 
-base_script: cstring = 
-	`xpcall(function()
-    	exe_path = styxsys.get_exe_path()
-        exe_dir = exe_path:match("^(.+)[/\\].*$")
-        styxsys.chdir(exe_dir)
-        package.path = exe_dir .. "/../source/?/init.lua;" .. package.path
-        package.path = exe_dir .. "/../source/?.lua;" .. package.path
-        package.path = exe_dir .. "/../source/scripts/?.lua;" .. package.path
-        local styxengine = require('styxengine')
-        styxengine.run()
-    end, function(err)
-   		print('Error: ' .. tostring(err))
-    end)`
-  
+import "engine:sys"
+import "engine:core"
+import "engine:core/styxlua"
+
 main :: proc()
 {
+    context = core.init_styx_context()
+    defer core.free_styx_context()
+
     L := luaL.newstate()
     defer lua.close(L)
   
     luaL.openlibs(L)
+    styxlua.init(L)
 
     SDL.Init({ .VIDEO })
   	defer SDL.Quit()
+
 	window := SDL.CreateWindow("Project Ananke",
                                SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED,
                                1280, 720, nil)
 	defer SDL.DestroyWindow(window)
 
+    rule30 := styxlua.extract_rule(L, "../source/scripts/rule30.lua")
+    defer styxlua.free_rule(&rule30)
+
 	for running := true; running; {
+        free_all(context.temp_allocator)
+
 		for e: SDL.Event; SDL.PollEvent(&e); {
 			#partial switch e.type {
 			case .QUIT:
@@ -49,9 +51,4 @@ main :: proc()
 			}
 		}
 	}
-
-    if luaL.dostring(L, base_script) != lua.OK {
-        fmt.printf("Lua error: %s.\n", lua.tostring(L, -1))
-        lua.pop(L, 1)
-    }
 }

@@ -1,8 +1,20 @@
 #!/bin/bash
 
+compile() {
+	odin build engine -collection:ext=./ext -collection:engine=./engine -debug -out:build/ananke
+}
+
+run() {
+	pushd build > /dev/null
+	./ananke
+	popd > /dev/null
+}
+
 mkdir -p build
 
-# files=$(find . -name "*.c")
-# echo clang -g `sdl2-config --cflags --static-libs` -Iext/lua544  -o build/ananke
-
-odin build engine -collection:ext=./ext -out:build/ananke
+if [[ "$1" == "run" ]]; then
+	compile
+	run
+else
+	compile
+fi

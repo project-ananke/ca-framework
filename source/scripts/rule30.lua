@@ -31,4 +31,3 @@ for y = 2, rule30.grid_height do
 end
 
 return rule30
-
