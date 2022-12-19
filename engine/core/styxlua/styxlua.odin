@@ -6,13 +6,15 @@ import "core:fmt"
 import "ext:odin-lua/lua"
 import "ext:odin-lua/luaL"
 
-import "engine:sys"
+import "engine:common"
+import "engine:core/styxlua/luasys"
 
-Rule :: struct 
-{
-    grid_width, grid_height: u32,
-    grid: []u8,
-}
+@(private)
+L: ^lua.State
+
+// Move the rules to a different file. The current situation does not work well with this because
+// anything that has to do with lua has to be included in this one file. That means rules extracted
+// from lua scripts should be in this file. Or we can write simple wrappers.
 
 base_script: cstring = 
 	`xpcall(function()
@@ -29,12 +31,15 @@ base_script: cstring =
     end)`
 
 libs := [?]luaL.Reg{
-	{ "styxsys", sys.luaopen },
+	{ "styxsys", luasys.luaopen },
 	{ nil, nil }, 
 }
 
-init :: proc(L: ^lua.State)
+init :: proc()
 {
+    L = luaL.newstate()
+    luaL.openlibs(L)
+
 	for i := 0; libs[i].func != nil; i += 1 {
 		luaL.requiref(L, libs[i].name, libs[i].func, 1)
 	}
@@ -45,8 +50,13 @@ init :: proc(L: ^lua.State)
     }
 }
 
+free :: proc()
+{
+    lua.close(L)
+}
+
 // Error handling
-module_index_int :: proc(L: ^lua.State, index: string) -> i64
+module_index_int :: proc(index: string) -> i64
 {
     lua.pushstring(L, index, context.temp_allocator)
     lua.gettable(L, -2)
@@ -58,10 +68,9 @@ module_index_int :: proc(L: ^lua.State, index: string) -> i64
     return result
 }
 
-
 // Do some cool error checking. 
 @(private)
-rule_extract_grid :: proc(L: ^lua.State, grid_width: u32, grid_height: u32) -> (grid: []u8)
+rule_extract_grid :: proc(grid_width: u32, grid_height: u32) -> (grid: []u8)
 {
     grid = make([]u8, grid_width * grid_height)
 
@@ -86,23 +95,19 @@ rule_extract_grid :: proc(L: ^lua.State, grid_width: u32, grid_height: u32) -> (
 }
 
 // Change context allocator, I don't know.
-extract_rule :: proc(L: ^lua.State, rule_path: cstring) -> (rule: Rule)
+extract_rule :: proc(rule_path: cstring) -> (rule: common.Rule)
 {
     if luaL.dofile(L, rule_path) != lua.OK {
         log.errorf("Lua error: %s.", lua.tostring(L, -1))
         lua.pop(L, 1)
+
+        return
     }
 
+    rule.grid_width = u32(module_index_int("grid_width"))
+    rule.grid_height = u32(module_index_int("grid_height"))
 
-    rule.grid_width = u32(module_index_int(L, "grid_width"))
-    rule.grid_height = u32(module_index_int(L, "grid_height"))
-
-    rule.grid = rule_extract_grid(L, rule.grid_width, rule.grid_height)
+    rule.grid = rule_extract_grid(rule.grid_width, rule.grid_height)
 
     return
-}
-
-free_rule :: proc(rule: ^Rule)
-{
-    delete(rule.grid)
 }

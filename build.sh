@@ -1,7 +1,7 @@
 #!/bin/bash
 
 compile() {
-	odin build engine -collection:ext=./ext -collection:engine=./engine -debug -out:build/ananke
+	odin build source -collection:ext=./engine/ext -collection:engine=./engine -debug -out:build/ananke
 }
 
 run() {
@@ -16,5 +16,6 @@ if [[ "$1" == "run" ]]; then
 	compile
 	run
 else
+	echo "Compiling Ananke"
 	compile
 fi
