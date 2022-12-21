@@ -2,6 +2,7 @@ package styxlua
 
 import "core:log"
 import "core:fmt"
+import "core:strings"
 
 import "ext:odin-lua/lua"
 import "ext:odin-lua/luaL"
@@ -95,8 +96,9 @@ rule_extract_grid :: proc(grid_width: u32, grid_height: u32) -> (grid: []u8)
 }
 
 // Change context allocator, I don't know.
-extract_rule :: proc(rule_path: cstring) -> (rule: common.Rule)
+extract_rule :: proc(_rule_path: string, allocator := context.allocator) -> (rule: common.Rule)
 {
+    rule_path := strings.clone_to_cstring(_rule_path, allocator)
     if luaL.dofile(L, rule_path) != lua.OK {
         log.errorf("Lua error: %s.", lua.tostring(L, -1))
         lua.pop(L, 1)

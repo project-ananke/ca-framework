@@ -10,6 +10,26 @@ import "engine:core/styxlua"
 import "engine:core/styx2d"
 import "engine:core/styxm"
 
+// Do not export any external libraries in this file. 
+import mu "vendor:microui"
+
+script_window :: proc(mu_ctx: ^mu.Context) -> string
+{
+    scripts := platform.list_files("../source/scripts", context.temp_allocator)
+    @static selected_script: string
+
+    if .ACTIVE in mu.header(mu_ctx, "Scripts") {
+        for file, _ in scripts {
+            mu.push_id(mu_ctx, file.base_name)
+            if (.SUBMIT in mu.button(mu_ctx, file.base_name)) {
+                selected_script = file.abs_path
+            }
+            mu.pop_id(mu_ctx)
+        }
+    }
+
+    return selected_script
+}
 
 main :: proc()
 {
@@ -19,16 +39,27 @@ main :: proc()
     window := platform.init_window(1280, 720, "Project Ananke")
     defer platform.free_window(&window)
 
-    rule30 := styxlua.extract_rule("../source/scripts/rule90.lua")
-    defer common.free_rule(&rule30)
-
+    selected_script: string
     for window.running {
     	free_all(context.temp_allocator)
 
     	platform.window_process(&window)
         platform.window_clear(&window, styxm.Vec3c{0xFF, 0xFF, 0xFF})
 
-        styx2d.push_gridrule(&window, rule30, styxm.Vec3c{0x00, 0x00, 0x00})
+        mu.begin(&window.mu_ctx)
+        if mu.window(&window.mu_ctx, "Demo Window", {40, 40, 300, 450}) {
+            selected_script = script_window(&window.mu_ctx)
+        }
+        mu.end(&window.mu_ctx)
+
+        if selected_script != "" {
+            rule := styxlua.extract_rule(selected_script, context.temp_allocator)
+            defer common.free_rule(&rule)
+
+            styx2d.push_gridrule(&window, rule, styxm.Vec3c{0x00, 0x00, 0x00})
+        }
+
+        styx2d.mu_render(&window)
 
         platform.window_update(&window)
     }
