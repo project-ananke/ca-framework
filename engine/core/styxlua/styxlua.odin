@@ -70,10 +70,10 @@ module_index_int :: proc(index: string) -> i64
 }
 
 // Do some cool error checking. 
-@(private)
-rule_extract_grid :: proc(grid_width: u32, grid_height: u32) -> (grid: []u8)
+@private
+rule_extract_grid :: proc(grid_width: u32, grid_height: u32, allocator := context.allocator) -> (grid: []u8)
 {
-    grid = make([]u8, grid_width * grid_height)
+    grid = make([]u8, grid_width * grid_height, allocator)
 
     lua.pushstring(L, "grid", context.temp_allocator)
     lua.gettable(L, -2)
@@ -109,7 +109,8 @@ extract_rule :: proc(_rule_path: string, allocator := context.allocator) -> (rul
     rule.grid_width = u32(module_index_int("grid_width"))
     rule.grid_height = u32(module_index_int("grid_height"))
 
-    rule.grid = rule_extract_grid(rule.grid_width, rule.grid_height)
+    rule.grid = rule_extract_grid(rule.grid_width, rule.grid_height, allocator)
 
+    lua.settop(L, 0)
     return
 }
