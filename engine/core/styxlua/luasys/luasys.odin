@@ -1,16 +1,17 @@
-package lua_sys
+package luasys
 
 import "core:os"
 import "core:runtime"
 import "core:c"
 import "core:log"
 
-import "engine:common"
+import SDL "vendor:sdl2"
 
 import "ext:odin-lua/lua"
 import "ext:odin-lua/luaL"
 
-import SDL "vendor:sdl2"
+import "engine:common"
+import "engine:platform"
 
 // Memory leak in a system call somewhere here. 
 list_dir :: proc "c" (L: ^lua.State) -> c.int
@@ -18,43 +19,24 @@ list_dir :: proc "c" (L: ^lua.State) -> c.int
 	context = common.styx_context()
 
 	path := string(luaL.checkstring(L, 1))
-	handle, err := os.open(path, int(os.File_Mode_Dir))
-
-	if err != 0 {
-		lua.pushnil(L)
-		lua.pushstring(L, os.get_last_error_string(), context.temp_allocator)
-		return 2
-	}
-	defer os.close(handle)
-
-	// check again
-	file_info, err2 := os.read_dir(handle, 0, context.temp_allocator)
-	if err2 != 0 {
-		lua.pushnil(L)
-		lua.pushstring(L, os.get_last_error_string(), context.temp_allocator)
-
-		return 2
-	}
+	file_entries := platform.list_dir(path, context.temp_allocator)
 
 	lua.newtable(L)
-	for i := 0; i < len(file_info); i += 1 {
-		lua.pushstring(L, file_info[i].name, context.temp_allocator)
+	for i := 0; i < len(file_entries); i += 1 {
+		lua.pushstring(L, file_entries[i].base_name, context.temp_allocator)
 		lua.rawseti(L, -2, i64(i + 1))
 	}
 
 	return 1
 }
 
-chdir :: proc "c" (L: ^lua.State) -> c.int
+change_dir :: proc "c" (L: ^lua.State) -> c.int
 {
 	context = common.styx_context()
-	path := luaL.checklstring(L, 1, nil)
+	path := string(luaL.checkstring(L, 1))
+	platform.change_dir(path)
 
-when ODIN_OS == .Darwin {
-	err := os._unix_chdir(path)
-}
-
-	return err
+	return 0
 }
 
 get_exe_path :: proc "c" (L: ^lua.State) -> c.int
@@ -81,7 +63,7 @@ message_box :: proc "c" (L: ^lua.State) -> c.int
 
 styxsys_lib := [?]luaL.Reg {
 	{ "list_dir", list_dir },
-	{ "chdir", chdir },
+	{ "chdir", change_dir },
 	{ "get_exe_path", get_exe_path },
 	{ "message_box", message_box },
 	{ nil, nil },

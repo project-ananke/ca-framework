@@ -6,7 +6,7 @@ import "engine:platform"
 import "engine:core/styxm"
 import "engine:core/styxlua"
 
-import SDL "vendor:SDL2"
+import SDL "vendor:sdl2"
 import mu "vendor:microui"
 
 // Figure out how to separate the renderer from the drawing in the platform layer. 

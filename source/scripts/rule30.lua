@@ -2,11 +2,18 @@ local core = require('core')
 
 local rule30 = {}
 
-local orig_width = 100
-local orig_height = 36
-local grid = core.zero_grid(orig_width, orig_height)
+rule30.grid_width = 64
+rule30.grid_height = 36
 
-grid[1][1 + orig_width / 2] = 1
+function rule30.init(grid, grid_width, grid_height) 
+    grid[1][1 + grid_width / 2] = 1
+end
+
+-- Runs in a loop. 
+function rule30.run(grid, grid_width, grid_height)
+
+end
+
 for y = 2, orig_height do
     if grid[y - 1][2] == 1 then break end
     for x = 2, orig_width do
@@ -29,9 +36,6 @@ for y = 2, orig_height do
         end
     end
 end
-
-rule30.grid_width = 64
-rule30.grid_height = orig_height
 
 rule30.grid = core.crop_center_grid(grid, orig_width, orig_height, rule30.grid_width)
 

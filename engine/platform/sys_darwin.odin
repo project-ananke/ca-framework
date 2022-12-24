@@ -5,13 +5,7 @@ import "core:strings"
 import "core:mem"
 import "core:os"
 
-File_Entry :: struct
-{
-	base_name: string,
-	abs_path: string,
-}
-
-list_files :: proc(dir: string, allocator := context.allocator) -> []File_Entry
+list_dir :: proc(dir: string, allocator := context.allocator) -> []File_Entry
 {
 	handle, err := os.open(dir)
 	if err != 0 {
@@ -42,4 +36,10 @@ free_file_entries :: proc(file_entries: []File_Entry)
 		delete(file.base_name)
 		delete(file.abs_path)
 	}
+}
+
+change_dir :: proc(_path: string, allocator := context.temp_allocator)
+{
+	path := strings.clone_to_cstring(_path, allocator)
+	return os._unix_chdir(path)
 }

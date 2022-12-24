@@ -8,7 +8,7 @@ import "core:fmt"
 import "ext:odin-lua/lua"
 import "ext:odin-lua/luaL"
 
-import SDL "vendor:SDL2"
+import SDL "vendor:sdl2"
 
 import "engine:common"
 import "engine:core/styxlua"

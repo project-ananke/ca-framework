@@ -15,7 +15,7 @@ import mu "vendor:microui"
 
 dev_window :: proc(mu_ctx: ^mu.Context) -> string
 {
-    scripts := platform.list_files("../source/scripts", context.temp_allocator)
+    scripts := platform.list_dir("../source/scripts", context.temp_allocator)
     @static selected_script: string
     @static selected_script_name: string
 

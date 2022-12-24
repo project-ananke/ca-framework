@@ -4,7 +4,7 @@ import "core:strings"
 import "core:fmt"
 import "core:time"
 
-import SDL "vendor:SDL2"
+import SDL "vendor:sdl2"
 import mu "vendor:microui"
 
 import "engine:core/styxm"
