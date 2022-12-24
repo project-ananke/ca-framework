@@ -13,9 +13,12 @@ run() {
 mkdir -p build
 
 if [[ "$1" == "run" ]]; then
-	compile
-	run
+	echo "-- Compiling Ananke"
+	if compile; then 
+		echo "-- Running Ananke"
+		run
+	fi
 else
-	echo "Compiling Ananke"
+	echo "-- Compiling Ananke"
 	compile
 fi

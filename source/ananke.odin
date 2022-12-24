@@ -13,18 +13,27 @@ import "engine:core/styxm"
 // Do not export any external libraries in this file. 
 import mu "vendor:microui"
 
-script_window :: proc(mu_ctx: ^mu.Context) -> string
+dev_window :: proc(mu_ctx: ^mu.Context) -> string
 {
     scripts := platform.list_files("../source/scripts", context.temp_allocator)
     @static selected_script: string
+    @static selected_script_name: string
 
-    if mu.window(mu_ctx, "Scripts Selection Menu", {40, 40, 200, 400}) {
-        for file, _ in scripts {
-            mu.push_id(mu_ctx, file.base_name)
-            if (.SUBMIT in mu.button(mu_ctx, file.base_name)) {
-                selected_script = file.abs_path
+    info_script := fmt.aprintf("Selected script: %s", selected_script_name)
+    defer delete(info_script)
+
+    if mu.window(mu_ctx, "Dev Window", {920, 120, 200, 400}) {
+        if (.ACTIVE in mu.header(mu_ctx, "Scripts")) { 
+            for file, _ in scripts {
+               mu.push_id(mu_ctx, file.base_name)
+               if (.SUBMIT in mu.button(mu_ctx, file.base_name)) {
+                   selected_script = file.abs_path
+                   selected_script_name = file.base_name
+               }
+               mu.pop_id(mu_ctx)
             }
-            mu.pop_id(mu_ctx)
+
+            mu.label(mu_ctx, info_script)
         }
     }
 
@@ -39,6 +48,9 @@ main :: proc()
     window := platform.init_window(1280, 720, "Project Ananke")
     defer platform.free_window(&window)
 
+    core_grid: common.Grid
+    defer common.free_grid(&core_grid)
+
     selected_script: string
     for window.running {
     	free_all(context.temp_allocator)
@@ -47,15 +59,20 @@ main :: proc()
         platform.window_clear(&window, styxm.Vec3c{0xFF, 0xFF, 0xFF})
 
         mu.begin(&window.mu_ctx)
-        selected_script = script_window(&window.mu_ctx)
+        selected_script = dev_window(&window.mu_ctx)
         mu.end(&window.mu_ctx)
 
         if selected_script != "" {
-            rule := styxlua.extract_rule(selected_script, context.temp_allocator)
-            styx2d.push_gridrule(&window, rule, styxm.Vec3c{0x00, 0x00, 0x00})
+            styxlua.set_global_grid(core_grid, "styx_grid")
+            rule_grid := styxlua.extract_rule(selected_script, context.temp_allocator)
+            common.grid_update(&core_grid, &rule_grid)
+
+            styx2d.push_gridrule(&window, rule_grid, styxm.Vec3c{0x00, 0x00, 0x00})
         }
 
         styx2d.mu_render(&window)
+
         platform.window_update(&window)
+        platform.window_cap_fps(60)
     }
 }

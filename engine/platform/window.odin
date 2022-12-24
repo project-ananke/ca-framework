@@ -2,6 +2,7 @@ package platform
 
 import "core:strings"
 import "core:fmt"
+import "core:time"
 
 import SDL "vendor:SDL2"
 import mu "vendor:microui"
@@ -37,7 +38,7 @@ init_microui :: proc(using window: ^Window)
 		return
 	}
 	
-	pixels := make([][4]u8, mu.DEFAULT_ATLAS_WIDTH*mu.DEFAULT_ATLAS_HEIGHT)
+	pixels := make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
 	defer delete(pixels)
 
 	for alpha, i in mu.default_atlas_alpha {
@@ -137,4 +138,23 @@ window_clear :: proc(using window: ^Window, col: styxm.Vec3c)
 window_update :: proc(using window: ^Window)
 {
 	SDL.RenderPresent(renderer)
+}
+
+window_cap_fps :: proc(cap: u32)
+{
+	@static time_last: time.Tick
+	if time_last._nsec == 0 {
+		time_last = time.tick_now()
+		return
+	}
+
+	d := time.tick_since(time_last)
+	d_ms := time.duration_milliseconds(d)
+
+	ms_cap := 1000.0 / f64(cap)
+	if d_ms < ms_cap {
+		// One millisecond is 1/1000 of a second.
+		// One nanosecond is 1/1000000000 of a second. 
+		time.sleep(time.Duration((ms_cap - d_ms) * 1000000.0))
+	}
 }

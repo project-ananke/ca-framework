@@ -27,7 +27,7 @@ push_rect_frame :: proc(using window: ^platform.Window,
 }
 
 push_gridrule :: proc(using window: ^platform.Window,
-                      rule: common.Rule, col: styxm.Vec3c)
+                      rule: common.Grid, col: styxm.Vec3c)
 {
 	wh := styxm.Vec2_Coord{
 		i32(window.width / rule.grid_width), 

@@ -78,6 +78,10 @@ rule_extract_grid :: proc(grid_width: u32, grid_height: u32, allocator := contex
     lua.pushstring(L, "grid", context.temp_allocator)
     lua.gettable(L, -2)
 
+    if !lua.istable(L, -1) {
+        return
+    }
+
     for y in 1..=grid_height {
         lua.pushinteger(L, i64(y))
         
@@ -96,7 +100,7 @@ rule_extract_grid :: proc(grid_width: u32, grid_height: u32, allocator := contex
 }
 
 // Change context allocator, I don't know.
-extract_rule :: proc(_rule_path: string, allocator := context.allocator) -> (rule: common.Rule)
+extract_rule :: proc(_rule_path: string, allocator := context.allocator) -> (rule: common.Grid)
 {
     rule_path := strings.clone_to_cstring(_rule_path, allocator)
     if luaL.dofile(L, rule_path) != lua.OK {
@@ -106,6 +110,7 @@ extract_rule :: proc(_rule_path: string, allocator := context.allocator) -> (rul
         return
     }
 
+    // Check if there is a return. 
     rule.grid_width = u32(module_index_int("grid_width"))
     rule.grid_height = u32(module_index_int("grid_height"))
 
@@ -113,4 +118,25 @@ extract_rule :: proc(_rule_path: string, allocator := context.allocator) -> (rul
 
     lua.settop(L, 0)
     return
+}
+
+set_global_grid :: proc(grid: common.Grid, var_name: cstring)
+{
+    if grid.grid_width == 0 || grid.grid_height == 0 {
+        return
+    }
+
+    lua.newtable(L)
+
+    for y in 1..=grid.grid_height {
+        lua.newtable(L)
+
+        for x in 1..=grid.grid_width {
+            lua.pushinteger(L, i64(grid.grid[((y - 1) * grid.grid_width) + (x - 1)]))
+            lua.rawseti(L, -2, i64(x))
+        }
+        lua.rawseti(L, -2, i64(y))
+    }
+
+    lua.setglobal(L, var_name)
 }

@@ -5,47 +5,55 @@ import "core:mem"
 import "core:log"
 import "core:fmt"
 
-Rule :: struct 
+Grid :: struct 
 {
     grid_width, grid_height: u32,
     grid: []u8,
 }
 
-free_rule :: proc(rule: ^Rule)
+free_grid :: proc(rule: ^Grid, allocator := context.allocator)
 {
-    delete(rule.grid)
+	if rule.grid_width == 0 || rule.grid_height == 0 do return
+    delete(rule.grid, allocator)
+
+    rule.grid = nil
+    rule.grid_width = 0
+    rule.grid_height = 0
 }
 
-@(private)
+init_grid :: proc(grid_width, grid_height: u32, allocator := context.allocator) -> (grid: Grid)
+{
+    grid.grid_width = grid_width
+    grid.grid_height = grid_height
+
+    grid.grid = make([]u8, grid_width * grid_height, allocator)
+
+    return
+}
+
+grid_update :: proc(grid1: ^Grid, grid2: ^Grid)
+{
+	if grid1.grid_width != grid2.grid_width || 
+	   grid1.grid_height != grid2.grid_height {
+		free_grid(grid1)
+		grid1^ = init_grid(grid2.grid_width, grid2.grid_height)
+		return
+	}
+
+	for y in 0..<grid1.grid_height {
+		for x in 0..<grid1.grid_width {
+			grid1.grid[(y * grid1.grid_width) + x] = 
+				grid2.grid[(y * grid1.grid_width) + x]
+		}
+	}
+}
+
+@private
 _styx_context: struct{
 	tracking_allocator: mem.Tracking_Allocator,
 
 	using runtime_ctx: runtime.Context,
 }
-
-@private
-Logging_Allocator_Data :: struct {
-	backing: mem.Allocator,
-}
-
-// @private
-// logging_allocator :: proc(data: ^Logging_Allocator_Data) -> mem.Allocator {
-// 	// `package log` uses context.temp_allocator and temp_allocator is lazily initialized.  Dummy allocate here
-// 	// to make sure it doesn't use context.allocator within our custom allocator procedure.
-// 	dummy := new(int, context.temp_allocator);
-  
-// 	return mem.Allocator{
-// 		data = data,
-// 		procedure = proc(allocator_data: rawptr, mode: mem.Allocator_Mode, size, alignment: int, old_memory: rawptr, old_size: int, flags: u64 = 0, loc := #caller_location) -> (result: rawptr) {
-// 			data := cast(^Logging_Allocator_Data) allocator_data;
-// 			log.infof("{}: size={} alignment={} old_memory={} old_size={}, flags={}, loc={}",
-// 			           mode, size, alignment, old_memory, old_size, flags, loc);
-// 			result = data.backing.procedure(data.backing.data, mode, size, alignment, old_memory, old_size, flags, loc);
-// 			log.infof(" = %p", result);
-// 			return;
-// 		},
-// 	};
-// }
 
 init_styx_context :: proc() -> runtime.Context
 {
