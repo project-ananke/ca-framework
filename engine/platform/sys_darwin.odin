@@ -41,5 +41,5 @@ free_file_entries :: proc(file_entries: []File_Entry)
 change_dir :: proc(_path: string, allocator := context.temp_allocator)
 {
 	path := strings.clone_to_cstring(_path, allocator)
-	return os._unix_chdir(path)
+	os._unix_chdir(path)
 }
