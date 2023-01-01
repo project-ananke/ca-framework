@@ -10,7 +10,7 @@ import "engine:core/styxlua"
 import "engine:core/styx2d"
 import "engine:core/styxm"
 
-// Do not export any external libraries in this file. 
+// Do not import any external libraries in this file. 
 import mu "vendor:microui"
 
 dev_window :: proc(mu_ctx: ^mu.Context) -> string
