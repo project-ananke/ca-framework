@@ -5,6 +5,7 @@ import "core:strings"
 import "core:mem"
 import "core:os"
 import "core:time"
+import "core:fmt"
 
 import SDL "vendor:sdl2"
 
@@ -23,7 +24,7 @@ Window :: struct
 	handle: ^SDL.Window,
 	renderer: ^SDL.Renderer,
 
-	_native_renderer: Renderer,
+	_native_renderer: MetalRenderer,
 }
 
 init :: proc()
@@ -56,6 +57,9 @@ init_window :: proc(width: u32, height: u32, title: string) -> (window: Window)
 	err: ^NS.Error
 	window._native_renderer, err = init_renderer(window.handle)
 	// TODO(sir->w7): Error handling.
+	if err != nil {
+		fmt.eprintln(err->localizedDescription()->odinString())
+	}
 
 	window.running = true
 	SDL.ShowWindow(window.handle)
@@ -81,17 +85,6 @@ window_process :: proc(using window: ^Window)
 			}
 		}
 	}
-}
-
-window_clear :: proc(using window: ^Window, col: styxm.Vec3c)
-{
-	SDL.SetRenderDrawColor(renderer, col.x, col.y, col.z, 0xFF)
-	SDL.RenderClear(renderer)
-}
-
-window_update :: proc(using window: ^Window)
-{
-	SDL.RenderPresent(renderer)
 }
 
 window_cap_fps :: proc(cap: u32)

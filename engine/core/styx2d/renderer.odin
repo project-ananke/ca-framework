@@ -1,47 +1,60 @@
 package styx2d
 
 import "engine:common"
-import "engine:platform"
-
 import "engine:core/styxm"
-import "engine:core/styxlua"
 
-import SDL "vendor:sdl2"
-import mu "vendor:microui"
-
-// Figure out how to separate the renderer from the drawing in the platform layer. 
-push_rect_fill :: proc(using window: ^platform.Window,
-                  xy: styxm.Vec2_Coord, wh: styxm.Vec2_Coord,
-                  col: styxm.Vec3c)
+// NOTE(sir->w7): This is the classic sir->w7 implementation of the FIFO stack-based
+// rendering pipeline, and it surely isn't the most effective solution to this. Maybe
+// look for better ways to implement this system.
+RenderEntryCmd :: enum
 {
-	SDL.SetRenderDrawColor(renderer, col.x, col.y, col.z, 0xFF)
-	SDL.RenderFillRect(renderer, &SDL.Rect{x=xy.x, y=xy.y, w=wh.x, h=wh.y})
+	Clear,
+	Triangle,
 }
 
-push_rect_frame :: proc(using window: ^platform.Window,
-                 	    xy: styxm.Vec2_Coord, wh: styxm.Vec2_Coord,
-                        col: styxm.Vec3c)
+RenderEntryClear :: struct
 {
-	SDL.SetRenderDrawColor(renderer, col.x, col.y, col.z, 0xFF)
-	SDL.RenderDrawRect(renderer, &SDL.Rect{x=xy.x, y=xy.y, w=wh.x, h=wh.y})
+	col: styxm.Vec3c,
 }
 
-push_gridrule :: proc(using window: ^platform.Window,
-                      rule: common.Grid, col: styxm.Vec3c)
+// Maybe not use a union for this.
+RenderData :: union
 {
-	wh := styxm.Vec2_Coord{
-		i32(window.width / rule.grid_width), 
-		i32(window.height / rule.grid_height),
-	}
-
-	for y in 0..<rule.grid_height {
-		for x in 0..<rule.grid_width {
-			if rule.grid[(y * rule.grid_width) + x] == 1 {
-				push_rect_fill(window, styxm.Vec2_Coord{i32(x) * wh.x, i32(y) * wh.y}, wh, col)
-			} else {
-				push_rect_frame(window, styxm.Vec2_Coord{i32(x) * wh.x, i32(y) * wh.y}, wh, col)
-			}
-		}
-	}
+	RenderEntryClear,
 }
 
+// TODO(sir->w7): Work on a resizable command buffer.
+RENDERER_COMMANDS_MAX :: 64
+Renderer :: struct
+{
+	cmd: [RENDERER_COMMANDS_MAX]RenderEntryCmd,
+	data: [RENDERER_COMMANDS_MAX]RenderData,
+
+	write_at: u32,
+}
+
+// What will I use this function for?
+init_renderer :: proc() -> (renderer: Renderer)
+{
+	return
+}
+
+free_renderer :: proc(using renderer: ^Renderer)
+{
+	return
+}
+
+renderer_clear :: proc(using renderer: ^Renderer)
+{
+	write_at = 0
+}
+
+push_clear :: proc(using renderer: ^Renderer, col: styxm.Vec3c)
+{
+	assert(write_at < RENDERER_COMMANDS_MAX)
+	
+	cmd[write_at] = .Clear
+	data[write_at] = RenderEntryClear{ col }
+
+	write_at += 1
+}

@@ -1,13 +1,18 @@
 package platform
 
+import "core:log"
+
 import SDL "vendor:sdl2"
 
 import NS "vendor:darwin/Foundation"
 import MTL "vendor:darwin/Metal"
 import CA "vendor:darwin/QuartzCore"
 
+import "engine:core/styx2d"
+import "engine:core/styxm"
+
 // TODO(sir->w7): Implement error handling for Darwin system calls.
-Renderer :: struct
+MetalRenderer :: struct
 {
 	native_window: ^NS.Window,
 
@@ -27,7 +32,8 @@ Renderer :: struct
 	color_buf: ^MTL.Buffer,
 }
 
-init_renderer :: proc(window: ^SDL.Window) -> (renderer: Renderer, err: ^NS.Error)
+// Plagiarized from GingerBill's Metal Github Gist.
+init_renderer :: proc(window: ^SDL.Window) -> (renderer: MetalRenderer, err: ^NS.Error)
 {
 	using renderer
 
@@ -108,32 +114,41 @@ init_renderer :: proc(window: ^SDL.Window) -> (renderer: Renderer, err: ^NS.Erro
 	return
 }
 
-renderer_process :: proc(using renderer: ^Renderer)
+renderer_update :: proc(window: ^Window, renderer: ^styx2d.Renderer)
 {
+	using window._native_renderer
+	
 	NS.scoped_autoreleasepool()
 
 	drawable := swapchain->nextDrawable()
 	assert(drawable != nil)
 
 	pass := MTL.RenderPassDescriptor.renderPassDescriptor()
-	color_attachment := pass->colorAttachments()->object(0)
-	assert(color_attachment != nil)
-
-	color_attachment->setClearColor(MTL.ClearColor{0.25, 0.5, 1.0, 1.0})
-	color_attachment->setLoadAction(.Clear)
-	color_attachment->setStoreAction(.Store)
-	color_attachment->setTexture(drawable->texture())
-
-
 	command_buffer := cmd_queue->commandBuffer()
-	render_encoder := command_buffer->renderCommandEncoderWithDescriptor(pass)
 
+	for i in 0..<renderer.write_at {
+		switch renderer.cmd[i] {
+		case .Clear:
+			col := styxm.v3c_to_v3cf(renderer.data[i].(styx2d.RenderEntryClear).col)
+			
+			color_attachment := pass->colorAttachments()->object(0)
+			assert(color_attachment != nil)
+
+			color_attachment->setClearColor(MTL.ClearColor{col.r, col.g, col.b, 1.0})
+			color_attachment->setLoadAction(.Clear)
+			color_attachment->setStoreAction(.Store)
+			color_attachment->setTexture(drawable->texture())
+		case .Triangle:
+		}
+	}
+	renderer.write_at = 0
+
+	/*render_encoder := command_buffer->renderCommandEncoderWithDescriptor(pass)
 	render_encoder->setRenderPipelineState(pipeline_state)
 	render_encoder->setVertexBuffer(vertex_buf, 0, 0)
 	render_encoder->setVertexBuffer(color_buf, 0, 1)
 	render_encoder->drawPrimitivesWithInstanceCount(.Triangle, 0, 3, 1)
-
-	render_encoder->endEncoding()
+	render_encoder->endEncoding()*/
 
 	command_buffer->presentDrawable(drawable)
 	command_buffer->commit()
