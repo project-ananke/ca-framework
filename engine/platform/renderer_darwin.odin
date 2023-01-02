@@ -1,0 +1,140 @@
+package platform
+
+import SDL "vendor:sdl2"
+
+import NS "vendor:darwin/Foundation"
+import MTL "vendor:darwin/Metal"
+import CA "vendor:darwin/QuartzCore"
+
+// TODO(sir->w7): Implement error handling for Darwin system calls.
+Renderer :: struct
+{
+	native_window: ^NS.Window,
+
+	dev: ^MTL.Device,
+	swapchain: ^CA.MetalLayer,
+
+	cmd_queue: ^MTL.CommandQueue,
+
+	shader_program: ^MTL.Library,
+
+	vertex_program: ^MTL.Function,
+	fragment_program: ^MTL.Function,
+
+	pipeline_state: ^MTL.RenderPipelineState,
+
+	vertex_buf: ^MTL.Buffer,
+	color_buf: ^MTL.Buffer,
+}
+
+init_renderer :: proc(window: ^SDL.Window) -> (renderer: Renderer, err: ^NS.Error)
+{
+	using renderer
+
+	window_system_info: SDL.SysWMinfo
+	SDL.GetVersion(&window_system_info.version)
+	SDL.GetWindowWMInfo(window, &window_system_info)
+	assert(window_system_info.subsystem == .COCOA)
+
+	native_window = cast(^NS.Window)window_system_info.info.cocoa.window
+	dev = MTL.CreateSystemDefaultDevice()
+
+	swapchain = CA.MetalLayer.layer()
+	swapchain->setDevice(renderer.dev)
+	swapchain->setPixelFormat(.BGRA8Unorm_sRGB)
+	swapchain->setFramebufferOnly(true)
+	swapchain->setFrame(native_window->frame())
+
+	native_window->contentView()->setLayer(swapchain)
+	native_window->setOpaque(true)
+	native_window->setBackgroundColor(nil)
+	
+	cmd_queue = dev->newCommandQueue()
+
+	compile_options := NS.new(MTL.CompileOptions)
+	defer compile_options->release()
+
+	program_source :: `
+		using namespace metal;
+
+		struct ColoredVertex {
+			float4 position [[position]];
+			float4 color;
+		};
+
+		vertex ColoredVertex vertex_main(constant float4 *position [[buffer(0)]],
+										 constant float4 *color    [[buffer(1)]],
+										 uint vid                  [[vertex_id]]) {
+			ColoredVertex vert;
+			vert.position = position[vid];
+			vert.color    = color[vid];
+			return vert;
+		}
+
+		fragment float4 fragment_main(ColoredVertex vert [[stage_in]]) {
+			return vert.color;
+		}
+	`
+
+	shader_program = dev->newLibraryWithSource(NS.AT(program_source), compile_options) or_return
+
+	vertex_program = shader_program->newFunctionWithName(NS.AT("vertex_main"))
+	fragment_program = shader_program->newFunctionWithName(NS.AT("fragment_main"))
+
+	assert(vertex_program != nil)
+	assert(fragment_program != nil)
+
+	pipeline_state_descriptor := NS.new(MTL.RenderPipelineDescriptor)
+	pipeline_state_descriptor->colorAttachments()->object(0)->setPixelFormat(.BGRA8Unorm_sRGB)
+	pipeline_state_descriptor->setVertexFunction(vertex_program)
+	pipeline_state_descriptor->setFragmentFunction(fragment_program)
+
+	pipeline_state = dev->newRenderPipelineStateWithDescriptor(pipeline_state_descriptor) or_return
+
+	positions := [?][4]f32{
+		{ 0.0,  0.5, 0, 1},
+		{-0.5, -0.5, 0, 1},
+		{ 0.5, -0.5, 0, 1},
+	}
+	colors := [?][4]f32{
+		{1, 0, 0, 1},
+		{0, 1, 0, 1},
+		{0, 0, 1, 1},
+	}
+
+	vertex_buf = dev->newBufferWithSlice(positions[:], {})
+	color_buf = dev->newBufferWithSlice(colors[:], {})
+
+	return
+}
+
+renderer_process :: proc(using renderer: ^Renderer)
+{
+	NS.scoped_autoreleasepool()
+
+	drawable := swapchain->nextDrawable()
+	assert(drawable != nil)
+
+	pass := MTL.RenderPassDescriptor.renderPassDescriptor()
+	color_attachment := pass->colorAttachments()->object(0)
+	assert(color_attachment != nil)
+
+	color_attachment->setClearColor(MTL.ClearColor{0.25, 0.5, 1.0, 1.0})
+	color_attachment->setLoadAction(.Clear)
+	color_attachment->setStoreAction(.Store)
+	color_attachment->setTexture(drawable->texture())
+
+
+	command_buffer := cmd_queue->commandBuffer()
+	render_encoder := command_buffer->renderCommandEncoderWithDescriptor(pass)
+
+	render_encoder->setRenderPipelineState(pipeline_state)
+	render_encoder->setVertexBuffer(vertex_buf, 0, 0)
+	render_encoder->setVertexBuffer(color_buf, 0, 1)
+	render_encoder->drawPrimitivesWithInstanceCount(.Triangle, 0, 3, 1)
+
+	render_encoder->endEncoding()
+
+	command_buffer->presentDrawable(drawable)
+	command_buffer->commit()
+}

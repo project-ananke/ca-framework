@@ -12,21 +12,21 @@ import SDL "vendor:sdl2"
 
 import "engine:common"
 import "engine:core/styxlua"
+import "engine:platform"
 
 init_engine :: proc() -> runtime.Context
 {
 	context = common.init_styx_context()
 
     styxlua.init()
-    SDL.Init({ .VIDEO })
-
+    platform.init()
     return context
 }
 
 free_engine :: proc()
 {
 	styxlua.free()
-	SDL.Quit()
+	platform.quit()
 
 	common.free_styx_context()
 }

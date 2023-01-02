@@ -1,3 +1,6 @@
 [submodule "engine/ext/odin-lua"]
 	path = engine/ext/odin-lua
 	url = https://github.com/sir-w7/odin-lua.git
+[submodule "engine/ext/odin-imgui"]
+	path = engine/ext/odin-imgui
+	url = https://github.com/NoahR02/odin-imgui.git
