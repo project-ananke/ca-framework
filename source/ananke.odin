@@ -26,14 +26,13 @@ main :: proc()
 
     	platform.window_process(&window)
 
-		//styx2d.push_clear(&renderer, styxm.Vec3c{255, 0, 255})
+		styx2d.push_clear(&renderer, styxm.Vec3c{0, 168, 255})
 
         platform.renderer_update(&window, &renderer)
         platform.window_cap_fps(60)
     }
 
-	/*
-	core_grid: common.Grid
+	/*core_grid: common.Grid
 	defer common.free_grid(&core_grid)
 	selected_script := "../source/scripts/rule90.lua"
 	for window.running {
@@ -47,6 +46,5 @@ main :: proc()
 
 		platform.window_update(&window)
 		platform.window_cap_fps(60)
-	}
-	*/
+	}*/
 }
