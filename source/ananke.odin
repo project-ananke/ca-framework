@@ -18,33 +18,32 @@ main :: proc()
     window := platform.init_window(1280, 720, "Project Ananke")
     defer platform.free_window(&window)
 
-	renderer := styx2d.init_renderer()
-	defer styx2d.free_renderer(&renderer)
+    renderer := styx2d.init_renderer()
+    defer styx2d.free_renderer(&renderer)
 
     for window.running {
     	free_all(context.temp_allocator)
-
+	
     	platform.window_process(&window)
-
-		styx2d.push_clear(&renderer, styxm.Vec3c{0, 168, 255})
+    	styx2d.push_clear(&renderer, styxm.Vec3c{0, 168, 255})
 
         platform.renderer_update(&window, &renderer)
-        platform.window_cap_fps(60)
+        platform.window_cap_fps(30)
     }
+    
+    /*core_grid: common.Grid
+    defer common.free_grid(&core_grid)
+    selected_script := "../source/scripts/rule90.lua"
+    for window.running {
+	free_all(context.temp_allocator)
 
-	/*core_grid: common.Grid
-	defer common.free_grid(&core_grid)
-	selected_script := "../source/scripts/rule90.lua"
-	for window.running {
-		free_all(context.temp_allocator)
+	platform.window_process(&window)
+	platform.window_clear(&window, styxm.Vec3c{0xFF, 0xFF, 0xFF})
 
-		platform.window_process(&window)
-		platform.window_clear(&window, styxm.Vec3c{0xFF, 0xFF, 0xFF})
+	rule_grid := styxlua.extract_rule(selected_script, context.temp_allocator)
+	styx2d.push_gridrule(&window, rule_grid, styxm.Vec3c{0x00, 0x00, 0x00})
 
-		rule_grid := styxlua.extract_rule(selected_script, context.temp_allocator)
-		styx2d.push_gridrule(&window, rule_grid, styxm.Vec3c{0x00, 0x00, 0x00})
-
-		platform.window_update(&window)
-		platform.window_cap_fps(60)
-	}*/
+	platform.window_update(&window)
+	platform.window_cap_fps(60)
+    }*/
 }

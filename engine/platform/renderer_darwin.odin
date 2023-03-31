@@ -2,6 +2,7 @@ package platform
 
 import "core:log"
 import "core:sync"
+import "core:math"
 
 import SDL "vendor:sdl2"
 
@@ -30,27 +31,59 @@ MetalRenderer :: struct
 	pipeline_state: ^MTL.RenderPipelineState,
 
 	vertex_buf: ^MTL.Buffer,
-	color_buf: ^MTL.Buffer,
+	index_buf: ^MTL.Buffer,
+	instance_buf: ^MTL.Buffer,
+
+	clear_col: styxm.Vec3cf,
 }
 
+InstanceData :: struct #align 16
+{
+	transform: matrix[4, 4]f32, 
+	color: [4]f32,
+}
+
+INSTANCES_MAX :: 64
+
 program_source :: `
+#include <metal_stdlib>
+
 using namespace metal;
 
-struct ColoredVertex {
+struct InstanceData
+{
+	float4x4 transform;
+	float4 color;
+};
+
+struct VertexInput
+{
+	packed_float3 position;
+};
+
+struct ColoredVertex
+{
 	float4 position [[position]];
 	float4 color;
 };
 
-vertex ColoredVertex vertex_main(device packed_float3 *position [[buffer(0)]],
-								 device float4 *color [[buffer(1)]],
-								 uint vid [[vertex_id]]) {
+vertex ColoredVertex vertex_main(device const VertexInput *vertex_data    [[buffer(0)]],
+								 device const InstanceData *instance_data [[buffer(1)]],
+								 uint vid                                 [[vertex_id]],
+								 uint iid                                 [[instance_id]])
+{
 	ColoredVertex vert;
-	vert.position = float4(position[vid], 1.0);
-	vert.color    = color[vid];
+	
+	float4 pos = float4(vertex_data[vid].position, 1.0);
+
+	vert.position = instance_data[iid].transform * pos;
+	vert.color = instance_data[iid].color;
+
 	return vert;
 }
 
-fragment float4 fragment_main(ColoredVertex vert [[stage_in]]) {
+fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
+{
 	return vert.color;
 }
 `
@@ -77,13 +110,12 @@ init_renderer :: proc(window: ^SDL.Window) -> (renderer: MetalRenderer, err: ^NS
 	native_window->contentView()->setLayer(swapchain)
 	native_window->setOpaque(true)
 	native_window->setBackgroundColor(nil)
-	
+
 	cmd_queue = dev->newCommandQueue()
 
 	compile_options := NS.new(MTL.CompileOptions)
 	defer compile_options->release()
 
-	
 	shader_program = dev->newLibraryWithSource(NS.AT(program_source), compile_options) or_return
 
 	vertex_program = shader_program->newFunctionWithName(NS.AT("vertex_main"))
@@ -93,31 +125,39 @@ init_renderer :: proc(window: ^SDL.Window) -> (renderer: MetalRenderer, err: ^NS
 	assert(fragment_program != nil)
 
 	pipeline_state_descriptor := NS.new(MTL.RenderPipelineDescriptor)
+	defer pipeline_state_descriptor->release()
+
 	pipeline_state_descriptor->colorAttachments()->object(0)->setPixelFormat(.BGRA8Unorm_sRGB)
+
 	pipeline_state_descriptor->setVertexFunction(vertex_program)
 	pipeline_state_descriptor->setFragmentFunction(fragment_program)
 
 	pipeline_state = dev->newRenderPipelineStateWithDescriptor(pipeline_state_descriptor) or_return
 
 	positions := [?][3]f32{
-		{ 0.0,  1.0, 0.0},
-		{-1.0, -1.0, 0.0},
-		{ 1.0, -1.0, 0.0},
+		{ -0.5, -0.5, 0.5 },
+		{  0.5, -0.5, 0.5 },
+		{  0.5,  0.5, 0.5 },
+		{ -0.5,  0.5, 0.5 },
 	}
-	colors := [?][4]f32{
-		{1, 0, 0, 1},
-		{0, 1, 0, 1},
-		{0, 0, 1, 1},
+	indices := [?]u16{
+		0, 1, 2,
+		2, 3, 0,
 	}
 
-	vertex_buf = dev->newBufferWithSlice(positions[:], {.StorageModeManaged})
-	color_buf = dev->newBufferWithSlice(colors[:], {.StorageModeManaged})
+	vertex_buf = dev->newBufferWithSlice(positions[:], { .StorageModeManaged })
+	index_buf = dev->newBufferWithSlice(indices[:], { .StorageModeManaged })
+	instance_buf = dev->newBuffer(INSTANCES_MAX * size_of(InstanceData), { .StorageModeManaged })
 
 	return
 }
 
 free_renderer :: proc(using renderer: ^MetalRenderer)
 {
+	vertex_buf->release()
+	index_buf->release()
+	instance_buf->release()
+
 	cmd_queue->release()
 	swapchain->release()
 	dev->release()
@@ -140,30 +180,56 @@ renderer_update :: proc(window: ^Window, renderer: ^styx2d.Renderer)
 
 	{
 		color_attachment->setTexture(drawable->texture())
-		//color_attachment->setClearColor(MTL.ClearColor{0.0, 0.0, 0.0, 1.0})
-		// Defaults to loading the previous texture.
-		color_attachment->setLoadAction(.Load)
+		color_attachment->setClearColor(MTL.ClearColor{0.25, 0.5, 1.0, 1.0})
+		// color_attachment->setLoadAction(.Load)
+		color_attachment->setLoadAction(.Clear)
 		color_attachment->setStoreAction(.Store)
 	}
 
-	for i in 0..<renderer.write_at {
-		switch renderer.cmd[i] {
-		case .Clear:
-			col := styxm.v3c_to_v3cf(renderer.data[i].(styx2d.RenderEntryClear).col)
+	{
+		@static angle: f32
+		angle += 0.01
+		instance_data := instance_buf->contentsAsSlice([]InstanceData)[:INSTANCES_MAX]
+		for instance, idx in &instance_data {
+			scl :: 0.1
 
-			color_attachment->setClearColor(MTL.ClearColor{col.r, col.g, col.b, 1.0})
-			color_attachment->setLoadAction(.Clear)
-			color_attachment->setStoreAction(.Store)
-		case .Triangle:
+			i := f32(idx) / INSTANCES_MAX
+			xoff := (i*2 - 1) + (1.0/INSTANCES_MAX)
+			yoff := math.sin((i + angle) * math.TAU)
+			instance.transform = matrix[4, 4]f32{
+				scl * math.sin(angle),  scl * math.cos(angle), 0, xoff,
+				scl * math.cos(angle), -scl * math.sin(angle), 0, yoff,
+				                    0,                      0, 0,    0,
+				                    0,                      0, 0,    1,
+			}
+			instance.color = {i, 1-i, math.sin(math.TAU * i), 1}
 		}
+		sz := NS.UInteger(len(instance_data)*size_of(instance_data[0]))
+		instance_buf->didModifyRange(NS.Range_Make(0, sz))
 	}
-	styx2d.renderer_clear(renderer)
+	// for i in 0..<renderer.write_at {
+	// 	switch renderer.cmd[i] {
+	// 	case .Clear:
+	// 		clear_col = styxm.v3c_to_v3cf(renderer.data[i].(styx2d.RenderEntryClear).col)
+
+	// 		color_attachment->setClearColor(MTL.ClearColor{clear_col.r, clear_col.g, clear_col.b, 1.0})
+	// 		color_attachment->setLoadAction(.Clear)
+	// 		color_attachment->setStoreAction(.Store)
+	// 	case .Triangle:
+	// 	}
+	// }
+
+	renderer.write_at = 0
 
 	render_encoder := command_buffer->renderCommandEncoderWithDescriptor(pass)
+	defer render_encoder->release()
+
 	render_encoder->setRenderPipelineState(pipeline_state)
 	render_encoder->setVertexBuffer(vertex_buf, 0, 0)
-	render_encoder->setVertexBuffer(color_buf, 0, 1)
-	render_encoder->drawPrimitivesWithInstanceCount(.Triangle, 0, 3, 1)
+	render_encoder->setVertexBuffer(instance_buf, 0, 1)
+	
+	render_encoder->drawIndexedPrimitivesWithInstanceCount(.Triangle, 6, .UInt16, index_buf, 0, INSTANCES_MAX)
+
 	render_encoder->endEncoding()
 
 	command_buffer->presentDrawable(drawable)

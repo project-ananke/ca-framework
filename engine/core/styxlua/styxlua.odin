@@ -10,6 +10,9 @@ import "ext:odin-lua/luaL"
 import "engine:common"
 import "engine:core/styxlua/luasys"
 
+// NOTE(sir->w7): Rendering abstraction in the lua framework would 
+// make sense to queue jobs to the platform renderer. Hmm...
+
 @(private)
 L: ^lua.State
 

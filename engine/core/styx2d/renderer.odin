@@ -17,10 +17,17 @@ RenderEntryClear :: struct
 	col: styxm.Vec3c,
 }
 
+RenderEntryTriangle :: struct
+{
+	pos: styxm.Vec3f,
+	col: styxm.Vec3c,
+}
+
 // Maybe not use a union for this.
 RenderData :: union
 {
 	RenderEntryClear,
+	RenderEntryTriangle,
 }
 
 // TODO(sir->w7): Work on a resizable command buffer.
@@ -57,4 +64,9 @@ push_clear :: proc(using renderer: ^Renderer, col: styxm.Vec3c)
 	data[write_at] = RenderEntryClear{ col }
 
 	write_at += 1
+}
+
+push_triangle :: proc(using renderer: ^Renderer, col: styxm.Vec3c)
+{
+
 }
