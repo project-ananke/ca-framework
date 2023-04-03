@@ -31,6 +31,11 @@ init_grid :: proc(grid_width, grid_height: u32, allocator := context.allocator) 
     return
 }
 
+grid_index :: #force_inline proc(grid: ^Grid, x, y: u32) -> ^u8
+{
+	return &grid.grid[y * grid.grid_width + x]
+}
+
 grid_update :: proc(grid1: ^Grid, grid2: ^Grid)
 {
 	if grid1.grid_width != grid2.grid_width || 

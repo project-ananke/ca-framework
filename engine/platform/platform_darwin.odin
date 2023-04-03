@@ -14,6 +14,7 @@ import MTL "vendor:darwin/Metal"
 import CA "vendor:darwin/QuartzCore"
 
 import "engine:core/styxm"
+import "engine:core/styx2d"
 
 Window :: struct
 {
@@ -23,6 +24,8 @@ Window :: struct
 
 	handle: ^SDL.Window,
 	renderer: ^SDL.Renderer,
+
+	keys: [^]u8,
 
 	_native_renderer: MetalRenderer,
 }
@@ -55,7 +58,11 @@ init_window :: proc(width: u32, height: u32, title: string) -> (window: Window)
 	                                     { .ACCELERATED, .PRESENTVSYNC })
 
 	err: ^NS.Error
-	window._native_renderer, err = init_renderer(window.handle)
+	window._native_renderer, err = init_renderer(window.handle, width, height, styx2d.MAX_VERTEX_COUNT)
+
+	size: i32 = 256
+	window.keys = SDL.GetKeyboardState(&size)
+
 	// TODO(sir->w7): Error handling.
 	if err != nil {
 		fmt.eprintln(err->localizedDescription()->odinString())
@@ -104,6 +111,8 @@ window_cap_fps :: proc(cap: u32)
 		// One nanosecond is 1/1000000000 of a second. 
 		time.sleep(time.Duration((ms_cap - d_ms) * 1000000.0))
 	}
+
+	time_last = time.tick_now()
 }
 
 list_dir :: proc(dir: string, allocator := context.allocator) -> []File_Entry

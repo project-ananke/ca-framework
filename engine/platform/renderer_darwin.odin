@@ -3,7 +3,7 @@ package platform
 import "core:log"
 import "core:sync"
 import "core:math"
-
+import "core:fmt"
 import SDL "vendor:sdl2"
 
 import NS "vendor:darwin/Foundation"
@@ -32,33 +32,34 @@ MetalRenderer :: struct
 
 	vertex_buf: ^MTL.Buffer,
 	index_buf: ^MTL.Buffer,
-	instance_buf: ^MTL.Buffer,
-
-	clear_col: styxm.Vec3cf,
+	uniform_buf: ^MTL.Buffer,
 }
 
-InstanceData :: struct #align 16
+// We can ponder future uses of instancing for this. For simplicity's sake,
+// we will not use instancing. 
+// InstanceData :: struct #align 16
+// {
+// 	transform: matrix[4, 4]f32, 
+// 	color: [4]f32,
+// }
+
+// INSTANCES_MAX :: 64
+
+Uniforms :: struct
 {
-	transform: matrix[4, 4]f32, 
-	color: [4]f32,
+	screen2d_ortho: matrix[4, 4]f32,
 }
 
-INSTANCES_MAX :: 64
 
 program_source :: `
 #include <metal_stdlib>
 
 using namespace metal;
 
-struct InstanceData
-{
-	float4x4 transform;
-	float4 color;
-};
-
 struct VertexInput
 {
 	packed_float3 position;
+	packed_float4 color;
 };
 
 struct ColoredVertex
@@ -67,17 +68,21 @@ struct ColoredVertex
 	float4 color;
 };
 
+struct Uniforms
+{
+	float4x4 screen2d_ortho; // Temporary, crappy orthographic projection. 
+};
+
 vertex ColoredVertex vertex_main(device const VertexInput *vertex_data    [[buffer(0)]],
-								 device const InstanceData *instance_data [[buffer(1)]],
-								 uint vid                                 [[vertex_id]],
-								 uint iid                                 [[instance_id]])
+								 device const Uniforms& uniforms          [[buffer(1)]],
+								 uint vid                                 [[vertex_id]])
 {
 	ColoredVertex vert;
 	
 	float4 pos = float4(vertex_data[vid].position, 1.0);
 
-	vert.position = instance_data[iid].transform * pos;
-	vert.color = instance_data[iid].color;
+	vert.position = uniforms.screen2d_ortho * pos;
+	vert.color = vertex_data[vid].color;
 
 	return vert;
 }
@@ -89,7 +94,7 @@ fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
 `
 
 // Plagiarized from GingerBill's Metal Github Gist.
-init_renderer :: proc(window: ^SDL.Window) -> (renderer: MetalRenderer, err: ^NS.Error)
+init_renderer :: proc(window: ^SDL.Window, w, h: u32, vertex_count: u32) -> (renderer: MetalRenderer, err: ^NS.Error)
 {
 	using renderer
 
@@ -134,21 +139,32 @@ init_renderer :: proc(window: ^SDL.Window) -> (renderer: MetalRenderer, err: ^NS
 
 	pipeline_state = dev->newRenderPipelineStateWithDescriptor(pipeline_state_descriptor) or_return
 
-	positions := [?][3]f32{
-		{ -0.5, -0.5, 0.5 },
-		{  0.5, -0.5, 0.5 },
-		{  0.5,  0.5, 0.5 },
-		{ -0.5,  0.5, 0.5 },
-	}
-	indices := [?]u16{
-		0, 1, 2,
-		2, 3, 0,
+	// 0, 1, 2, 2, 3, 0,
+	// 4, 5, 6, 6, 7, 4,
+	// ...
+	indices: [6 * styx2d.MAX_VERTEX_COUNT]u16
+	for i in 0..<styx2d.MAX_VERTEX_COUNT {
+		indices[(6 * i)]     = u16((4 * i))
+		indices[(6 * i) + 1] = u16((4 * i) + 1)
+		indices[(6 * i) + 2] = u16((4 * i) + 2)
+		indices[(6 * i) + 3] = u16((4 * i) + 2)
+		indices[(6 * i) + 4] = u16((4 * i) + 3)
+		indices[(6 * i) + 5] = u16((4 * i))
 	}
 
-	vertex_buf = dev->newBufferWithSlice(positions[:], { .StorageModeManaged })
+	vertex_buf = dev->newBuffer(NS.UInteger(styx2d.MAX_VERTEX_COUNT * size_of(styx2d.Vertex)), { .StorageModeManaged })
 	index_buf = dev->newBufferWithSlice(indices[:], { .StorageModeManaged })
-	instance_buf = dev->newBuffer(INSTANCES_MAX * size_of(InstanceData), { .StorageModeManaged })
 
+	uniform_buf = dev->newBuffer(size_of(Uniforms), { .StorageModeManaged })
+
+	{
+		uniforms_data := uniform_buf->contentsAsType(Uniforms)
+		uniforms_data.screen2d_ortho = styxm.screen2d_orthoproj(f32(w), f32(h))
+
+		sz := NS.UInteger(size_of(Uniforms))
+		uniform_buf->didModifyRange(NS.Range_Make(0, sz))
+	}
+	
 	return
 }
 
@@ -156,7 +172,7 @@ free_renderer :: proc(using renderer: ^MetalRenderer)
 {
 	vertex_buf->release()
 	index_buf->release()
-	instance_buf->release()
+	uniform_buf->release()
 
 	cmd_queue->release()
 	swapchain->release()
@@ -180,55 +196,35 @@ renderer_update :: proc(window: ^Window, renderer: ^styx2d.Renderer)
 
 	{
 		color_attachment->setTexture(drawable->texture())
-		color_attachment->setClearColor(MTL.ClearColor{0.25, 0.5, 1.0, 1.0})
-		// color_attachment->setLoadAction(.Load)
+		color_attachment->setClearColor(MTL.ClearColor{0.0, 0.0, 0.0, 1.0})
 		color_attachment->setLoadAction(.Clear)
 		color_attachment->setStoreAction(.Store)
 	}
 
-	{
-		@static angle: f32
-		angle += 0.01
-		instance_data := instance_buf->contentsAsSlice([]InstanceData)[:INSTANCES_MAX]
-		for instance, idx in &instance_data {
-			scl :: 0.1
-
-			i := f32(idx) / INSTANCES_MAX
-			xoff := (i*2 - 1) + (1.0/INSTANCES_MAX)
-			yoff := math.sin((i + angle) * math.TAU)
-			instance.transform = matrix[4, 4]f32{
-				scl * math.sin(angle),  scl * math.cos(angle), 0, xoff,
-				scl * math.cos(angle), -scl * math.sin(angle), 0, yoff,
-				                    0,                      0, 0,    0,
-				                    0,                      0, 0,    1,
-			}
-			instance.color = {i, 1-i, math.sin(math.TAU * i), 1}
-		}
-		sz := NS.UInteger(len(instance_data)*size_of(instance_data[0]))
-		instance_buf->didModifyRange(NS.Range_Make(0, sz))
-	}
-	// for i in 0..<renderer.write_at {
-	// 	switch renderer.cmd[i] {
-	// 	case .Clear:
-	// 		clear_col = styxm.v3c_to_v3cf(renderer.data[i].(styx2d.RenderEntryClear).col)
-
-	// 		color_attachment->setClearColor(MTL.ClearColor{clear_col.r, clear_col.g, clear_col.b, 1.0})
-	// 		color_attachment->setLoadAction(.Clear)
-	// 		color_attachment->setStoreAction(.Store)
-	// 	case .Triangle:
-	// 	}
-	// }
-
-	renderer.write_at = 0
-
 	render_encoder := command_buffer->renderCommandEncoderWithDescriptor(pass)
-	defer render_encoder->release()
 
-	render_encoder->setRenderPipelineState(pipeline_state)
-	render_encoder->setVertexBuffer(vertex_buf, 0, 0)
-	render_encoder->setVertexBuffer(instance_buf, 0, 1)
-	
-	render_encoder->drawIndexedPrimitivesWithInstanceCount(.Triangle, 6, .UInt16, index_buf, 0, INSTANCES_MAX)
+	vertex_count := renderer.write_at
+	{
+		vertex_data := vertex_buf->contentsAsSlice([]styx2d.Vertex)[:styx2d.MAX_VERTEX_COUNT]
+		for idx := 0; idx < int(vertex_count); idx += 1{
+			vertex_data[idx] = renderer.data[idx]
+		}
+
+		sz := NS.UInteger(vertex_count * size_of(styx2d.Vertex))
+		vertex_buf->didModifyRange(NS.Range_Make(0, sz))
+
+		styx2d.renderer_clear(renderer)
+	}
+
+	if vertex_count != 0 {
+		render_encoder->setRenderPipelineState(pipeline_state)
+		render_encoder->setVertexBuffer(vertex_buf, 0, 0)
+		render_encoder->setVertexBuffer(uniform_buf, 0, 1)
+
+		render_encoder->drawIndexedPrimitives(.Triangle, 
+		                                      NS.UInteger(6 * (vertex_count / 4)), .UInt16, 
+		                                      index_buf, 0)
+	}
 
 	render_encoder->endEncoding()
 
