@@ -20,7 +20,7 @@ Vertex :: struct
 // TODO(sir->w7): Work on a resizable command buffer.
 Renderer :: struct
 {
-	data: [MAX_VERTEX_COUNT]Vertex,
+	data: []Vertex,
 
 	w, h: i32,
 	write_at: u32,
@@ -29,6 +29,7 @@ Renderer :: struct
 // What will I use this function for?
 init_renderer :: proc(width, height: i32) -> (renderer: Renderer)
 {
+	renderer.data = make([]Vertex, MAX_VERTEX_COUNT)
 	renderer.w = width
 	renderer.h = height
 
@@ -37,6 +38,7 @@ init_renderer :: proc(width, height: i32) -> (renderer: Renderer)
 
 free_renderer :: proc(using renderer: ^Renderer)
 {
+	delete(data)
 	return
 }
 
@@ -87,5 +89,4 @@ push_grid :: proc(using renderer: ^Renderer, grid: ^common.Grid)
         	}
         }
     }
-
 }

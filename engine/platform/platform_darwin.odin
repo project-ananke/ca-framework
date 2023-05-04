@@ -43,8 +43,10 @@ quit :: proc()
 	SDL.Quit()
 }
 
-init_window :: proc(width: u32, height: u32, title: string) -> (window: Window)
+init_window :: proc(width: u32, height: u32, title: string) -> (window: ^Window)
 {
+	window = new(Window)
+	
 	window.width = width;
 	window.height = height;
 	window.title = title;
@@ -78,6 +80,8 @@ free_window :: proc(using window: ^Window)
 {
 	SDL.DestroyRenderer(renderer)
 	SDL.DestroyWindow(handle)
+	
+	free(window)
 }
 
 window_process :: proc(using window: ^Window)
