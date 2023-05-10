@@ -30,9 +30,11 @@ main :: proc()
 	for window.running {
 	    free_all(context.temp_allocator)
     	platform.window_process(window)
-        platform.window_clear(window, styxm.Vec3c{255, 255, 255})
+        platform.window_clear(window, styxm.Vec3c{0x5F, 0x6C, 0x81})
         
+        styx2d.push_quad(&renderer, styxm.Vec3f{-0.5, 0.5, 0.0}, styxm.Vec2{1.0, -1.0}, styxm.Vec4c{0, 0, 0, 255})
         platform.renderer_update(window, &renderer)
+        platform.cap_fps(60)
 	}
 	
     

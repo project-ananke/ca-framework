@@ -36,21 +36,21 @@ def windows_compile(args):
 	print('---- ' + command)
 
 	start_time = timeit.default_timer()
-	res = subprocess.run(command)
+	res = subprocess.run(command, shell=True)
 	elapsed = 1000 * (timeit.default_timer() - start_time)
 
 	if res.returncode == 0:
-		print(f"--- {termcc.OKGREEN}SUCCESS{termcc.ENDC}: Compilation took {elapsed:.2f} ms.")
+		print(f"---- {termcc.OKGREEN}SUCCESS{termcc.ENDC}: Compilation took {elapsed:.2f} ms.")
 	else:
-		print(f"--- {termcc.FAIL}FAILED{termcc.ENDC}: Compilation took {elapsed:.2f} ms.")
+		print(f"---- {termcc.FAIL}FAILED{termcc.ENDC}: Compilation took {elapsed:.2f} ms.")
 
 	# Maybe, in the future, we can use Python's filesystem module (if there is one)
 	# to handle this for us. 
 	print('-- ' + termcc.HEADER + 'Copying shaders to build directory' + termcc.ENDC)
-	res = subprocess.run('xcopy /s /y /i engine\\shaders build\\shaders', stdout=subprocess.DEVNULL)
+	res = subprocess.run('xcopy /s /y /i engine\\shaders build\\shaders', shell=True, stdout=subprocess.DEVNULL)
 
 def windows_run(args):
-	subprocess.run('build/ananke.exe')
+	subprocess.run('pushd build && ananke.exe && popd', shell=True)
 
 def main():
 	parser = argparse.ArgumentParser(prog='ananke_sys',
@@ -67,9 +67,12 @@ def main():
 		# to generate an array... which is kind of weird. This is why 
 		# handmade software is peak because you actually understand how 
 		# it works.
-		if args.command[0] == 'build':
+		if args.command[0] == 'build' or args.command[0] == 'b':
 			windows_compile(args)
-		elif args.command[0] == 'run':
+		elif args.command[0] == 'run' or args.command[0] == 'r':
+			windows_run(args)
+		elif args.command[0] == 'br':
+			windows_compile(args)
 			windows_run(args)
 
 

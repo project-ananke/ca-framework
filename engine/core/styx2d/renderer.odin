@@ -11,7 +11,7 @@ MAX_INDEX_COUNT :: MAX_QUAD_COUNT * 6
 // NOTE(sir->w7): This is the classic sir->w7 implementation of the FIFO stack-based
 // rendering pipeline, and it surely isn't the most effective solution to this. Maybe
 // look for better ways to implement this system.
-Vertex :: struct
+Vertex :: struct #packed
 {
 	pos: styxm.Vec3f,
 	col: styxm.Vec4f,

@@ -4,7 +4,6 @@ import "core:log"
 import "core:strings"
 import "core:mem"
 import "core:os"
-import "core:time"
 import "core:fmt"
 
 import SDL "vendor:sdl2"
@@ -96,27 +95,6 @@ window_process :: proc(using window: ^Window)
 			}
 		}
 	}
-}
-
-window_cap_fps :: proc(cap: u32)
-{
-	@static time_last: time.Tick
-	if time_last._nsec == 0 {
-		time_last = time.tick_now()
-		return
-	}
-
-	d := time.tick_since(time_last)
-	d_ms := time.duration_milliseconds(d)
-
-	ms_cap := 1000.0 / f64(cap)
-	if d_ms < ms_cap {
-		// One millisecond is 1/1000 of a second.
-		// One nanosecond is 1/1000000000 of a second. 
-		time.sleep(time.Duration((ms_cap - d_ms) * 1000000.0))
-	}
-
-	time_last = time.tick_now()
 }
 
 list_dir :: proc(dir: string, allocator := context.allocator) -> []File_Entry
