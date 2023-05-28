@@ -27,6 +27,14 @@ D3D11Renderer :: struct
 
 	vertex_buffer: ^D3D11.IBuffer,
 	index_buffer: ^D3D11.IBuffer,
+    constant_buffer: ^D3D11.IBuffer,
+
+    const_buf_data: ConstantBuffer,
+}
+
+ConstantBuffer :: struct
+{
+    ortho_proj: matrix[4, 4]f32,
 }
 
 // TODO(sir-w7): Proper error handling, not just assertions. 
@@ -168,6 +176,21 @@ init_renderer :: proc(hwnd: win32.HWND, w: u32, h: u32) -> (renderer: D3D11Rende
 	hr = renderer.dev->CreateBuffer(&idx_buffer_desc, &idx_sr_data, &renderer.index_buffer)
 	assert(win32.SUCCEEDED(hr))
 
+    renderer.const_buf_data.ortho_proj = transpose(styxm.screen2d_orthoproj(f32(w), f32(h)))
+
+    const_buffer_desc := D3D11.BUFFER_DESC {
+        ByteWidth = size_of(renderer.const_buf_data),
+        Usage = .DEFAULT,
+        BindFlags = { .CONSTANT_BUFFER },
+    }
+
+    const_sr_data := D3D11.SUBRESOURCE_DATA {
+        pSysMem = &renderer.const_buf_data,
+    }
+
+    hr = renderer.dev->CreateBuffer(&const_buffer_desc, &const_sr_data, &renderer.constant_buffer)
+    assert(win32.SUCCEEDED(hr))
+
 	return
 }
 
@@ -178,6 +201,7 @@ free_renderer :: proc(using renderer: ^D3D11Renderer)
 
     vertex_buffer->Release()
     index_buffer->Release()
+    constant_buffer->Release()
 
 	dev->Release()
 	dev_ctx->Release()
@@ -227,6 +251,7 @@ renderer_update :: proc(window: ^Window, renderer: ^styx2d.Renderer)
 
 	dev_ctx->VSSetShader(vertex_shader, nil, 0)
 	dev_ctx->PSSetShader(pixel_shader, nil, 0)
+    dev_ctx->VSSetConstantBuffers(0, 1, &constant_buffer)
 
 	dev_ctx->DrawIndexed(6*(vertex_count/4), 0, 0)
 

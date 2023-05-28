@@ -10,11 +10,16 @@ struct VSOutput
     float4 color : COLOR;
 };
 
+cbuffer Constants : register(b0) 
+{
+    float4x4 ortho_proj; 
+};
+
 VSOutput vs_main(VSInput input)
 {
     VSOutput output = (VSOutput)0;
 
-    output.position_clip = float4(input.position_local, 1.0);
+    output.position_clip = mul(ortho_proj, float4(input.position_local, 1.0));
     output.color = float4(input.color);
 
     return output;
