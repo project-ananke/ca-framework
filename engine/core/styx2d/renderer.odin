@@ -1,91 +1,92 @@
 package styx2d
 
 import "engine:common"
-import "engine:platform"
-
 import "engine:core/styxm"
-import "engine:core/styxlua"
+import "engine:core/styx2d"
 
-import SDL "vendor:sdl2"
-import mu "vendor:microui"
+MAX_QUAD_COUNT :: 10000
+MAX_VERTEX_COUNT :: MAX_QUAD_COUNT * 4
+MAX_INDEX_COUNT :: MAX_QUAD_COUNT * 6
 
-// Figure out how to separate the renderer from the drawing in the platform layer. 
-push_rect_fill :: proc(using window: ^platform.Window,
-                  xy: styxm.Vec2_Coord, wh: styxm.Vec2_Coord,
-                  col: styxm.Vec3c)
+// NOTE(sir->w7): This is the classic sir->w7 implementation of the FIFO stack-based
+// rendering pipeline, and it surely isn't the most effective solution to this. Maybe
+// look for better ways to implement this system.
+Vertex :: struct #packed
 {
-	SDL.SetRenderDrawColor(renderer, col.x, col.y, col.z, 0xFF)
-	SDL.RenderFillRect(renderer, &SDL.Rect{x=xy.x, y=xy.y, w=wh.x, h=wh.y})
+	pos: styxm.Vec3f,
+	col: styxm.Vec4f,
 }
 
-push_rect_frame :: proc(using window: ^platform.Window,
-                 	    xy: styxm.Vec2_Coord, wh: styxm.Vec2_Coord,
-                        col: styxm.Vec3c)
+// TODO(sir->w7): Work on a resizable command buffer.
+Renderer :: struct
 {
-	SDL.SetRenderDrawColor(renderer, col.x, col.y, col.z, 0xFF)
-	SDL.RenderDrawRect(renderer, &SDL.Rect{x=xy.x, y=xy.y, w=wh.x, h=wh.y})
+	data: []Vertex,
+
+	w, h: i32,
+	write_at: u32,
 }
 
-push_gridrule :: proc(using window: ^platform.Window,
-                      rule: common.Grid, col: styxm.Vec3c)
+// What will I use this function for?
+init_renderer :: proc(width, height: i32) -> (renderer: Renderer)
 {
-	wh := styxm.Vec2_Coord{
-		i32(window.width / rule.grid_width), 
-		i32(window.height / rule.grid_height),
-	}
+	renderer.data = make([]Vertex, MAX_VERTEX_COUNT)
+	renderer.w = width
+	renderer.h = height
 
-	for y in 0..<rule.grid_height {
-		for x in 0..<rule.grid_width {
-			if rule.grid[(y * rule.grid_width) + x] == 1 {
-				push_rect_fill(window, styxm.Vec2_Coord{i32(x) * wh.x, i32(y) * wh.y}, wh, col)
-			} else {
-				push_rect_frame(window, styxm.Vec2_Coord{i32(x) * wh.x, i32(y) * wh.y}, wh, col)
-			}
-		}
-	}
+	return
 }
 
-mu_render :: proc(using window: ^platform.Window) {
-	render_texture :: proc(using window: ^platform.Window, dst: ^SDL.Rect, src: mu.Rect, color: mu.Color) {
-		dst.w = src.w
-		dst.h = src.h
-
-		SDL.SetTextureAlphaMod(state.atlas_texture, color.a)
-		SDL.SetTextureColorMod(state.atlas_texture, color.r, color.g, color.b)
-		SDL.RenderCopy(renderer, state.atlas_texture, &SDL.Rect{src.x, src.y, src.w, src.h}, dst)
-	}
-	
-	viewport_rect := &SDL.Rect{}
-	SDL.GetRendererOutputSize(renderer, &viewport_rect.w, &viewport_rect.h)
-	SDL.RenderSetViewport(renderer, viewport_rect)
-	SDL.RenderSetClipRect(renderer, viewport_rect)
-
-	command_backing: ^mu.Command
-	for variant in mu.next_command_iterator(&mu_ctx, &command_backing) {
-		switch cmd in variant {
-		case ^mu.Command_Text:
-			dst := SDL.Rect{cmd.pos.x, cmd.pos.y, 0, 0}
-			for ch in cmd.str do if ch&0xc0 != 0x80 {
-				r := min(int(ch), 127)
-				src := mu.default_atlas[mu.DEFAULT_ATLAS_FONT + r]
-				render_texture(window, &dst, src, cmd.color)
-				dst.x += dst.w
-			}
-		case ^mu.Command_Rect:
-			push_rect_fill(window, 
-			               styxm.Vec2_Coord{cmd.rect.x, cmd.rect.y}, 
-			               styxm.Vec2_Coord{cmd.rect.w, cmd.rect.h},
-			               styxm.Vec3c{cmd.color.r, cmd.color.g, cmd.color.b})
-		case ^mu.Command_Icon:
-			src := mu.default_atlas[cmd.id]
-			x := cmd.rect.x + (cmd.rect.w - src.w)/2
-			y := cmd.rect.y + (cmd.rect.h - src.h)/2
-			render_texture(window, &SDL.Rect{x, y, 0, 0}, src, cmd.color)
-		case ^mu.Command_Clip:
-			SDL.RenderSetClipRect(renderer, &SDL.Rect{cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h})
-		case ^mu.Command_Jump: 
-			unreachable()
-		}
-	}
+free_renderer :: proc(using renderer: ^Renderer)
+{
+	delete(data)
+	return
 }
 
+renderer_clear :: proc(using renderer: ^Renderer)
+{
+	write_at = 0
+}
+
+push_vertex :: proc(using renderer: ^Renderer,
+                    pos: styxm.Vec3f, col: styxm.Vec4c)
+{
+	assert(write_at < MAX_VERTEX_COUNT)
+	data[write_at] = Vertex{ pos, styxm.v4c_to_v4f(col) }
+
+	write_at += 1
+}
+
+push_quad :: proc(using renderer: ^Renderer, 
+                  coord: styxm.Vec3f, dim: styxm.Vec2, col: styxm.Vec4c)
+{
+
+	push_vertex(renderer, styxm.Vec3f{coord.x, coord.y, coord.z}, col)
+	push_vertex(renderer, 
+	            styxm.Vec3f{coord.x + f32(dim.x), coord.y, coord.z}, col)
+	push_vertex(renderer, 
+	            styxm.Vec3f{coord.x + f32(dim.x), coord.y + f32(dim.y), coord.z}, col)
+	push_vertex(renderer, 
+	            styxm.Vec3f{coord.x, coord.y + f32(dim.y), coord.z}, col)
+}
+
+push_clear :: #force_inline proc(using renderer: ^Renderer, col: styxm.Vec4c)
+{
+	push_quad(renderer, styxm.Vec3f{0, 0, 500}, styxm.Vec2{w, h}, col)
+}
+
+push_grid :: proc(using renderer: ^Renderer, grid: ^common.Grid)
+{
+	square_width := w / i32(grid.grid_width)
+	square_height := h / i32(grid.grid_height)
+
+	for y: u32 = 0; y < grid.grid_height; y += 1 {
+        for x: u32 = 0; x < grid.grid_width; x += 1 {
+        	if grid.grid[y * grid.grid_width + x] == 1 {
+        		styx2d.push_quad(renderer,
+        		                 styxm.Vec3f{f32(square_width*i32(x)), f32(square_height*i32(y)), 500},
+        		                 styxm.Vec2{i32(square_width), i32(square_height)},
+        		                 styxm.Vec4c{0, 0, 0, 255})
+        	}
+        }
+    }
+}

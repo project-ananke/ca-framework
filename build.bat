@@ -8,20 +8,18 @@ if "%1"=="" (
 	goto run
 )
 
+:compile
+echo -- Compiling Ananke
+odin build source -collection:ext=./engine/ext -show-timings -collection:engine=./engine -debug -out:build/ananke.exe
+goto end
 
 :run
+echo -- Compiling Ananke
+odin build source -collection:ext=./engine/ext -show-timings -collection:engine=./engine -debug -out:build/ananke.exe
 echo -- Running Ananke
 pushd build
 ananke.exe
 popd
-goto end
-
-:compile
-echo -- Compiling Ananke
-odin build source -collection:ext=engine/ext -collection:engine=engine -debug -out:build/ananke.exe
-
-echo -- Copying binary files
-copy /y engine\ext\lib\* build\*
 goto end
 
 :end
